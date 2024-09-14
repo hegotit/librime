@@ -219,14 +219,13 @@ Dictionary::Dictionary(string name,
                        vector<string> packs,
                        vector<of<Table>> tables,
                        an<Prism> prism)
-    : name_(name),
+    : name_(std::move(name)),
       packs_(std::move(packs)),
       tables_(std::move(tables)),
       prism_(std::move(prism)) {}
 
-Dictionary::~Dictionary() {
-  // should not close shared table and prism objects
-}
+// should not close shared table and prism objects
+Dictionary::~Dictionary() = default;
 
 static void lookup_table(Table* table,
                          DictEntryCollector* collector,
@@ -400,7 +399,7 @@ DictionaryComponent::DictionaryComponent()
           Service::instance().CreateDeployedResourceResolver(
               kTableResourceType)) {}
 
-DictionaryComponent::~DictionaryComponent() {}
+DictionaryComponent::~DictionaryComponent() = default;
 
 Dictionary* DictionaryComponent::Create(const Ticket& ticket) {
   if (!ticket.schema)
@@ -431,7 +430,7 @@ Dictionary* DictionaryComponent::Create(const Ticket& ticket) {
 }
 
 Dictionary* DictionaryComponent::Create(string dict_name,
-                                        string prism_name,
+                                        const string& prism_name,
                                         vector<string> packs) {
   // obtain prism and primary table objects
   auto primary_table = table_map_[dict_name].lock();

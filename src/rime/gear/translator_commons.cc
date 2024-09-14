@@ -16,12 +16,12 @@ namespace rime {
 
 // Patterns
 
-bool Patterns::Load(an<ConfigList> patterns) {
+bool Patterns::Load(const an<ConfigList>& patterns) {
   clear();
   if (!patterns)
     return false;
-  for (auto it = patterns->begin(); it != patterns->end(); ++it) {
-    if (auto value = As<ConfigValue>(*it)) {
+  for (auto& it : *patterns) {
+    if (auto value = As<ConfigValue>(it)) {
       push_back(boost::regex(value->str()));
     }
   }
@@ -144,7 +144,7 @@ TranslatorOptions::TranslatorOptions(const Ticket& ticket) {
         if (auto value = As<ConfigValue>(list->GetAt(i)))
           tags_.push_back(value->str());
     if (tags_.empty())
-      tags_.push_back("abc");
+      tags_.emplace_back("abc");
   }
   if (delimiters_.empty()) {
     delimiters_ = " ";

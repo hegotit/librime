@@ -23,9 +23,9 @@ class StableDb : public TableDb {
  public:
   StableDb(const path& file_path, const string& db_name);
 
-  virtual bool Open();
+  bool Open() override;
 };
 
 }  // namespace rime
 
-#endif  // RIME_TEXT_DB_H_
+#endif  // RIME_TABLE_DB_H_

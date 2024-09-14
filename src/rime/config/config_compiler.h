@@ -6,6 +6,7 @@
 #define RIME_CONFIG_COMPILER_H_
 
 #include <ostream>
+#include <utility>
 #include <rime/common.h>
 #include <rime/config/config_data.h>
 #include <rime/config/config_types.h>
@@ -17,9 +18,9 @@ struct ConfigResource : ConfigItemRef {
   an<ConfigData> data;
   bool loaded = false;
 
-  ConfigResource(const string& _id, an<ConfigData> _data)
-      : ConfigItemRef(nullptr), resource_id(_id), data(_data) {}
-  an<ConfigItem> GetItem() const override { return data->root; }
+  ConfigResource(string  _id, an<ConfigData> _data)
+      : ConfigItemRef(nullptr), resource_id(std::move(_id)), data(std::move(_data)) {}
+  [[nodiscard]] an<ConfigItem> GetItem() const override { return data->root; }
   void SetItem(an<ConfigItem> item) override { data->root = item; }
 };
 
@@ -28,7 +29,7 @@ struct Reference {
   string local_path;
   bool optional;
 
-  string repr() const;
+  [[nodiscard]] string repr() const;
 };
 
 std::ostream& operator<<(std::ostream& stream, const Reference& reference);
@@ -50,22 +51,22 @@ class ConfigCompiler {
   virtual ~ConfigCompiler();
 
   Reference CreateReference(const string& qualified_path);
-  void AddDependency(an<Dependency> dependency);
-  void Push(an<ConfigResource> resource);
-  void Push(an<ConfigList> config_list, size_t index);
-  void Push(an<ConfigMap> config_map, const string& key);
+  void AddDependency(const an<Dependency>& dependency);
+  void Push(const an<ConfigResource>& resource);
+  void Push(const an<ConfigList>& config_list, size_t index);
+  void Push(const an<ConfigMap>& config_map, const string& key);
   bool Parse(const string& key, const an<ConfigItem>& item);
   void Pop();
 
   void EnumerateResources(
-      function<void(an<ConfigResource> resource)> process_resource);
-  an<ConfigResource> GetCompiledResource(const string& resource_id) const;
+      const function<void(an<ConfigResource> resource)>& process_resource);
+  [[nodiscard]] an<ConfigResource> GetCompiledResource(const string& resource_id) const;
   an<ConfigResource> Compile(const string& file_name);
-  bool Link(an<ConfigResource> target);
+  bool Link(const an<ConfigResource>& target);
 
-  bool blocking(const string& full_path) const;
-  bool pending(const string& full_path) const;
-  bool resolved(const string& full_path) const;
+  [[nodiscard]] bool blocking(const string& full_path) const;
+  [[nodiscard]] bool pending(const string& full_path) const;
+  [[nodiscard]] bool resolved(const string& full_path) const;
   vector<of<Dependency>> GetDependencies(const string& path);
   bool ResolveDependencies(const string& path);
 

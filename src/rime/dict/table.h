@@ -54,7 +54,7 @@ struct Entry {
 
 struct LongEntry {
   Code extra_code;
-  Entry entry;
+  Entry entry{};
 };
 
 struct PhraseIndex;
@@ -104,25 +104,25 @@ struct Metadata {
 class TableAccessor {
  public:
   TableAccessor() = default;
-  TableAccessor(const Code& index_code,
+  TableAccessor(Code index_code,
                 const List<table::Entry>* entries,
                 double credibility = 0.0);
-  TableAccessor(const Code& index_code,
+  TableAccessor(Code index_code,
                 const Array<table::Entry>* entries,
                 double credibility = 0.0);
-  TableAccessor(const Code& index_code,
+  TableAccessor(Code index_code,
                 const table::TailIndex* code_map,
                 double credibility = 0.0);
 
   RIME_API bool Next();
 
-  RIME_API bool exhausted() const;
-  RIME_API size_t remaining() const;
-  RIME_API const table::Entry* entry() const;
-  RIME_API const table::Code* extra_code() const;
-  const Code& index_code() const { return index_code_; }
-  Code code() const;
-  double credibility() const { return credibility_; }
+  [[nodiscard]] RIME_API bool exhausted() const;
+  [[nodiscard]] RIME_API size_t remaining() const;
+  [[nodiscard]] RIME_API const table::Entry* entry() const;
+  [[nodiscard]] RIME_API const table::Code* extra_code() const;
+  [[nodiscard]] const Code& index_code() const { return index_code_; }
+  [[nodiscard]] Code code() const;
+  [[nodiscard]] double credibility() const { return credibility_; }
 
  private:
   Code index_code_;
@@ -139,9 +139,9 @@ struct SyllableGraph;
 
 class TableQuery {
  public:
-  TableQuery(table::Index* index) : lv1_index_(index) { Reset(); }
+  explicit TableQuery(table::Index* index) : lv1_index_(index) { Reset(); }
 
-  TableAccessor Access(SyllableId syllable_id, double credibility = 0.0) const;
+  [[nodiscard]] TableAccessor Access(SyllableId syllable_id, double credibility = 0.0) const;
 
   // down to next level
   bool Advance(SyllableId syllable_id, double credibility = 0.0);
@@ -152,7 +152,7 @@ class TableQuery {
   // back to root
   void Reset();
 
-  size_t level() const { return level_; }
+  [[nodiscard]] size_t level() const { return level_; }
 
  protected:
   size_t level_ = 0;
@@ -170,8 +170,8 @@ class TableQuery {
 
 class Table : public MappedFile {
  public:
-  RIME_API Table(const path& file_path);
-  virtual ~Table();
+  RIME_API explicit Table(const path& file_path);
+  ~Table() override;
 
   RIME_API bool Load();
   RIME_API bool Save();
@@ -189,8 +189,8 @@ class Table : public MappedFile {
                       TableQueryResult* result);
   RIME_API string GetEntryText(const table::Entry& entry);
 
-  uint32_t dict_file_checksum() const;
-  table::Metadata* metadata() const { return metadata_; }
+  [[nodiscard]] uint32_t dict_file_checksum() const;
+  [[nodiscard]] table::Metadata* metadata() const { return metadata_; }
 
  private:
   table::Index* BuildIndex(const Vocabulary& vocabulary, size_t num_syllables);

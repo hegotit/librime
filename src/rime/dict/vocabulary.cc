@@ -114,7 +114,7 @@ void DictEntryFilterBinder::AddFilter(DictEntryFilter filter) {
     filter_.swap(filter);
   } else {
     DictEntryFilter previous_filter(std::move(filter_));
-    filter_ = [previous_filter, filter](an<DictEntry> e) {
+    filter_ = [previous_filter, filter](const an<DictEntry>& e) {
       return previous_filter(e) && filter(e);
     };
   }
@@ -137,7 +137,7 @@ ShortDictEntryList* Vocabulary::LocateEntries(const Code& code) {
       v = page.next_level.get();
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 void Vocabulary::SortHomophones() {

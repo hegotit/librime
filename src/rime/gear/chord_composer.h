@@ -21,7 +21,7 @@ struct ChordingState {
   Chord pressed_keys;
   Chord recognized_chord;
 
-  bool IsPressed(int ch) const {
+  [[nodiscard]] bool IsPressed(int ch) const {
     return pressed_keys.find(ch) != pressed_keys.end();
   }
 
@@ -39,13 +39,13 @@ struct ChordingState {
 
 class ChordComposer : public Processor {
  public:
-  ChordComposer(const Ticket& ticket);
-  ~ChordComposer();
+  explicit ChordComposer(const Ticket& ticket);
+  ~ChordComposer() override;
 
-  virtual ProcessResult ProcessKeyEvent(const KeyEvent& key_event);
+  ProcessResult ProcessKeyEvent(const KeyEvent& key_event) override;
 
  protected:
-  bool FinishChordConditionIsMet() const;
+  [[nodiscard]] bool FinishChordConditionIsMet() const;
   ProcessResult ProcessChordingKey(const KeyEvent& key_event);
   ProcessResult ProcessFunctionKey(const KeyEvent& key_event);
   string SerializeChord(const Chord& chord);

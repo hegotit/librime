@@ -8,6 +8,7 @@
 //
 #include <algorithm>
 #include <functional>
+#include <utility>
 #include <rime/candidate.h>
 #include <rime/config.h>
 #include <rime/dict/vocabulary.h>
@@ -29,27 +30,27 @@ struct Line {
 
   static const Line kEmpty;
 
-  bool empty() const { return !predecessor && !entry; }
+  [[nodiscard]] bool empty() const { return !predecessor && !entry; }
 
-  string last_word() const { return entry ? entry->text : string(); }
+  [[nodiscard]] string last_word() const { return entry ? entry->text : string(); }
 
   struct Components {
     vector<const Line*> lines;
 
-    Components(const Line* line) {
+    explicit Components(const Line* line) {
       for (const Line* cursor = line; !cursor->empty();
            cursor = cursor->predecessor) {
         lines.push_back(cursor);
       }
     }
 
-    decltype(lines.crbegin()) begin() const { return lines.crbegin(); }
-    decltype(lines.crend()) end() const { return lines.crend(); }
+    [[nodiscard]] decltype(lines.crbegin()) begin() const { return lines.crbegin(); }
+    [[nodiscard]] decltype(lines.crend()) end() const { return lines.crend(); }
   };
 
-  Components components() const { return Components(this); }
+  [[nodiscard]] Components components() const { return Components(this); }
 
-  string context() const {
+  [[nodiscard]] string context() const {
     // look back 2 words
     return empty() ? string()
            : !predecessor || predecessor->empty()
@@ -57,7 +58,7 @@ struct Line {
                : predecessor->last_word() + last_word();
   }
 
-  vector<size_t> word_lengths() const {
+  [[nodiscard]] vector<size_t> word_lengths() const {
     vector<size_t> lengths;
     size_t last_end_pos = 0;
     for (const auto* c : components()) {
@@ -80,9 +81,9 @@ inline static Grammar* create_grammar(Config* config) {
 Poet::Poet(const Language* language, Config* config, Compare compare)
     : language_(language),
       grammar_(create_grammar(config)),
-      compare_(compare) {}
+      compare_(std::move(compare)) {}
 
-Poet::~Poet() {}
+Poet::~Poet() = default;
 
 bool Poet::CompareWeight(const Line& one, const Line& other) {
   return one.weight < other.weight;
@@ -141,9 +142,9 @@ struct BeamSearch {
 
   static void ForEachCandidate(const State& state,
                                Poet::Compare compare,
-                               UpdateLineCandidate update) {
+                               const UpdateLineCandidate& update) {
     auto top_candidates =
-        find_top_candidates<kMaxLineCandidates>(state, compare);
+        find_top_candidates<kMaxLineCandidates>(state, std::move(compare));
     for (const auto* candidate : top_candidates) {
       update(*candidate);
     }
@@ -155,7 +156,7 @@ struct BeamSearch {
   }
 
   static const Line& BestLineInState(const State& final_state,
-                                     Poet::Compare compare) {
+                                     const Poet::Compare& compare) {
     const Line* best = nullptr;
     for (const auto& candidate : final_state) {
       if (!best || compare(*best, candidate.second)) {
@@ -173,7 +174,7 @@ struct DynamicProgramming {
 
   static void ForEachCandidate(const State& state,
                                Poet::Compare compare,
-                               UpdateLineCandidate update) {
+                               const UpdateLineCandidate& update) {
     update(state);
   }
 
@@ -182,7 +183,7 @@ struct DynamicProgramming {
   }
 
   static const Line& BestLineInState(const State& final_state,
-                                     Poet::Compare compare) {
+                                     const Poet::Compare& compare) {
     return final_state;
   }
 };

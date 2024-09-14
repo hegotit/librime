@@ -107,7 +107,7 @@ class DictionaryComponent : public Dictionary::Component {
   DictionaryComponent();
   ~DictionaryComponent() override;
   Dictionary* Create(const Ticket& ticket) override;
-  Dictionary* Create(string dict_name, string prism_name, vector<string> packs);
+  Dictionary* Create(string dict_name, const string& prism_name, vector<string> packs);
 
  private:
   map<string, weak<Prism>> prism_map_;

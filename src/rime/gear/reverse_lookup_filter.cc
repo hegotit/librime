@@ -12,14 +12,16 @@
 #include <rime/gear/reverse_lookup_filter.h>
 #include <rime/gear/translator_commons.h>
 
+#include <utility>
+
 namespace rime {
 
 class ReverseLookupFilterTranslation : public CacheTranslation {
  public:
   ReverseLookupFilterTranslation(an<Translation> translation,
                                  ReverseLookupFilter* filter)
-      : CacheTranslation(translation), filter_(filter) {}
-  virtual an<Candidate> Peek();
+      : CacheTranslation(std::move(translation)), filter_(filter) {}
+  an<Candidate> Peek() override;
 
  protected:
   ReverseLookupFilter* filter_;

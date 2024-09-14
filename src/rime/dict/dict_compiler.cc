@@ -34,7 +34,7 @@ DictCompiler::DictCompiler(Dictionary* dictionary)
       target_resolver_(Service::instance().CreateStagingResourceResolver(
           {"target_file", "", ""})) {}
 
-DictCompiler::~DictCompiler() {}
+DictCompiler::~DictCompiler() = default;
 
 static bool load_dict_settings_from_file(DictSettings* settings,
                                          const path& dict_file) {
@@ -48,8 +48,8 @@ static bool get_dict_files_from_settings(vector<path>* dict_files,
                                          DictSettings& settings,
                                          ResourceResolver* source_resolver) {
   if (auto tables = settings.GetTables()) {
-    for (auto it = tables->begin(); it != tables->end(); ++it) {
-      string dict_name = As<ConfigValue>(*it)->str();
+    for (auto & it : *tables) {
+      string dict_name = As<ConfigValue>(it)->str();
       auto dict_file = source_resolver->ResolvePath(dict_name + ".dict.yaml");
       if (!std::filesystem::exists(dict_file)) {
         LOG(ERROR) << "source file '" << dict_file << "' does not exist.";
@@ -149,7 +149,7 @@ bool DictCompiler::Compile(const path& schema_file) {
       return false;
     }
     syllabary = std::move(collector.syllabary);
-  } else if (packs_.size() > 0) {
+  } else if (!packs_.empty()) {
     if (primary_table->Load() && primary_table->GetSyllabary(&syllabary))
       primary_table->Close();
     else

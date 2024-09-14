@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 #include <rime_api.h>
+
+#include <utility>
 #include "spelling.h"
 
 namespace rime {
@@ -20,7 +22,7 @@ class Corrector;
 using SyllableId = int32_t;
 
 struct EdgeProperties : SpellingProperties {
-  EdgeProperties(SpellingProperties sup) : SpellingProperties(sup) {};
+  explicit EdgeProperties(SpellingProperties sup) : SpellingProperties(std::move(sup)) {};
   EdgeProperties() = default;
   bool is_correction = false;
 };
@@ -45,10 +47,10 @@ struct SyllableGraph {
 class Syllabifier {
  public:
   Syllabifier() = default;
-  explicit Syllabifier(const string& delimiters,
+  explicit Syllabifier(string delimiters,
                        bool enable_completion = false,
                        bool strict_spelling = false)
-      : delimiters_(delimiters),
+      : delimiters_(std::move(delimiters)),
         enable_completion_(enable_completion),
         strict_spelling_(strict_spelling) {}
 
@@ -58,8 +60,8 @@ class Syllabifier {
   RIME_API void EnableCorrection(Corrector* corrector);
 
  protected:
-  void CheckOverlappedSpellings(SyllableGraph* graph, size_t start, size_t end);
-  void Transpose(SyllableGraph* graph);
+  static void CheckOverlappedSpellings(SyllableGraph* graph, size_t start, size_t end);
+  static void Transpose(SyllableGraph* graph);
 
   string delimiters_;
   bool enable_completion_ = false;

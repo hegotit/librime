@@ -6,6 +6,8 @@
 #include <rime/common.h>
 #include <rime/translation.h>
 
+#include <utility>
+
 namespace rime {
 
 class Candidate;
@@ -18,9 +20,9 @@ class ContextualTranslation : public PrefetchTranslation {
                         string input,
                         string preceding_text,
                         Grammar* grammar)
-      : PrefetchTranslation(translation),
-        input_(input),
-        preceding_text_(preceding_text),
+      : PrefetchTranslation(std::move(translation)),
+        input_(std::move(input)),
+        preceding_text_(std::move(preceding_text)),
         grammar_(grammar) {}
 
  protected:

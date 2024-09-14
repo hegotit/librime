@@ -13,15 +13,17 @@
 #include <rime/config/config_types.h>
 #include <rime/config/plugins.h>
 
+#include <utility>
+
 namespace rime {
 
 Config::Config() : ConfigItemRef(nullptr), data_(New<ConfigData>()) {
   ConfigItemRef::data_ = data_.get();
 }
 
-Config::~Config() {}
+Config::~Config() = default;
 
-Config::Config(an<ConfigData> data) : ConfigItemRef(data.get()), data_(data) {}
+Config::Config(const an<ConfigData>& data) : ConfigItemRef(data.get()), data_(data) {}
 
 bool Config::Save() {
   return data_->Save();
@@ -134,7 +136,7 @@ bool Config::SetString(const string& path, const string& value) {
 }
 
 bool Config::SetItem(const string& path, an<ConfigItem> item) {
-  return data_->TraverseWrite(path, item);
+  return data_->TraverseWrite(path, std::move(item));
 }
 
 an<ConfigItem> Config::GetItem() const {
@@ -173,7 +175,7 @@ ResourceResolver* UserConfigResourceProvider::CreateResourceResolver(
 ConfigComponentBase::ConfigComponentBase(ResourceResolver* resource_resolver)
     : resource_resolver_(resource_resolver) {}
 
-ConfigComponentBase::~ConfigComponentBase() {}
+ConfigComponentBase::~ConfigComponentBase() = default;
 
 Config* ConfigComponentBase::Create(const string& file_name) {
   return new Config(GetConfigData(file_name));
@@ -193,16 +195,16 @@ an<ConfigData> ConfigComponentBase::GetConfigData(const string& file_name) {
 }
 
 an<ConfigData> ConfigLoader::LoadConfig(ResourceResolver* resource_resolver,
-                                        const string& config_id) {
+                                        const string& config_id) const {
   auto data = New<ConfigData>();
   data->LoadFromFile(resource_resolver->ResolvePath(config_id), nullptr);
   data->set_auto_save(auto_save_);
   return data;
 }
 
-ConfigBuilder::ConfigBuilder() {}
+ConfigBuilder::ConfigBuilder() = default;
 
-ConfigBuilder::~ConfigBuilder() {}
+ConfigBuilder::~ConfigBuilder() = default;
 
 void ConfigBuilder::InstallPlugin(ConfigCompilerPlugin* plugin) {
   plugins_.push_back(the<ConfigCompilerPlugin>(plugin));
@@ -212,7 +214,7 @@ template <class Container>
 struct MultiplePlugins : ConfigCompilerPlugin {
   Container& plugins;
 
-  MultiplePlugins(Container& _plugins) : plugins(_plugins) {}
+  explicit MultiplePlugins(Container& _plugins) : plugins(_plugins) {}
   bool ReviewCompileOutput(ConfigCompiler* compiler,
                            an<ConfigResource> resource) override {
     return ReviewedByAll(&ConfigCompilerPlugin::ReviewCompileOutput, compiler,

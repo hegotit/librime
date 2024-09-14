@@ -38,10 +38,10 @@ class Navigator : public Processor, public KeyBindingProcessor<Navigator, 2> {
   void BeginMove(Context* ctx);
   bool JumpLeft(Context* ctx, size_t start_pos = 0);
   bool JumpRight(Context* ctx, size_t start_pos = 0);
-  bool MoveLeft(Context* ctx);
-  bool MoveRight(Context* ctx);
-  bool GoHome(Context* ctx);
-  bool GoToEnd(Context* ctx);
+  static bool MoveLeft(Context* ctx);
+  static bool MoveRight(Context* ctx);
+  static bool GoHome(Context* ctx);
+  static bool GoToEnd(Context* ctx);
 
   string input_;
   Spans spans_;

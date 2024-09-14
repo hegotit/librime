@@ -7,6 +7,7 @@
 #include <cfloat>
 #include <cstring>
 #include <algorithm>
+#include <memory>
 #include <queue>
 #include <utility>
 #include <rime/common.h>
@@ -21,26 +22,26 @@ const int kTableFormatLowestCompatible = 4.0;
 const char kTableFormatPrefix[] = "Rime::Table/";
 const size_t kTableFormatPrefixLen = sizeof(kTableFormatPrefix) - 1;
 
-TableAccessor::TableAccessor(const Code& index_code,
+TableAccessor::TableAccessor(Code index_code,
                              const List<table::Entry>* list,
                              double credibility)
-    : index_code_(index_code),
+    : index_code_(std::move(index_code)),
       entries_(list->at.get()),
       size_(list->size),
       credibility_(credibility) {}
 
-TableAccessor::TableAccessor(const Code& index_code,
+TableAccessor::TableAccessor(Code index_code,
                              const Array<table::Entry>* array,
                              double credibility)
-    : index_code_(index_code),
+    : index_code_(std::move(index_code)),
       entries_(array->at),
       size_(array->size),
       credibility_(credibility) {}
 
-TableAccessor::TableAccessor(const Code& index_code,
+TableAccessor::TableAccessor(Code index_code,
                              const table::TailIndex* code_map,
                              double credibility)
-    : index_code_(index_code),
+    : index_code_(std::move(index_code)),
       long_entries_(code_map->at),
       size_(code_map->size),
       credibility_(credibility) {}
@@ -61,7 +62,7 @@ size_t TableAccessor::remaining() const {
 
 const table::Entry* TableAccessor::entry() const {
   if (exhausted())
-    return NULL;
+    return nullptr;
   if (entries_)
     return &entries_[cursor_];
   else
@@ -70,7 +71,7 @@ const table::Entry* TableAccessor::entry() const {
 
 const table::Code* TableAccessor::extra_code() const {
   if (!long_entries_ || cursor_ >= size_)
-    return NULL;
+    return nullptr;
   return &long_entries_[cursor_].extra_code;
 }
 
@@ -80,8 +81,8 @@ Code TableAccessor::code() const {
     return index_code();
   }
   Code code(index_code());
-  for (auto p = extra->begin(); p != extra->end(); ++p) {
-    code.push_back(*p);
+  for (int p : *extra) {
+    code.push_back(p);
   }
   return code;
 }
@@ -179,25 +180,25 @@ TableAccessor TableQuery::Access(SyllableId syllable_id,
   if (level_ == 0) {
     if (!lv1_index_ || syllable_id < 0 ||
         syllable_id >= static_cast<SyllableId>(lv1_index_->size))
-      return TableAccessor();
+      return {};
     auto node = &lv1_index_->at[syllable_id];
-    return TableAccessor(add_syllable(index_code_, syllable_id), &node->entries,
-                         credibility);
+    return {add_syllable(index_code_, syllable_id), &node->entries,
+            credibility};
   } else if (level_ == 1 || level_ == 2) {
     auto index = (level_ == 1) ? lv2_index_ : lv3_index_;
     if (!index)
-      return TableAccessor();
+      return {};
     auto node = find_node(index->begin(), index->end(), syllable_id);
     if (node == index->end())
-      return TableAccessor();
-    return TableAccessor(add_syllable(index_code_, syllable_id), &node->entries,
-                         credibility);
+      return {};
+    return {add_syllable(index_code_, syllable_id), &node->entries,
+            credibility};
   } else if (level_ == 3) {
     if (!lv4_index_)
-      return TableAccessor();
-    return TableAccessor(index_code_, lv4_index_, credibility);
+      return {};
+    return {index_code_, lv4_index_, credibility};
   }
-  return TableAccessor();
+  return {};
 }
 
 // string Table::GetString_v1(const table::StringType& x) {
@@ -221,7 +222,7 @@ bool Table::AddString(const string& src,
 }
 
 bool Table::OnBuildStart() {
-  string_table_builder_.reset(new StringTableBuilder);
+  string_table_builder_ = std::make_unique<StringTableBuilder>();
   return true;
 }
 
@@ -241,14 +242,14 @@ bool Table::OnBuildFinish() {
 }
 
 bool Table::OnLoad() {
-  string_table_.reset(new StringTable(metadata_->string_table.get(),
-                                      metadata_->string_table_size));
+  string_table_ = std::make_unique<StringTable>(metadata_->string_table.get(),
+                                                metadata_->string_table_size);
   return true;
 }
 
 Table::Table(const path& file_path) : MappedFile(file_path) {}
 
-Table::~Table() {}
+Table::~Table() = default;
 
 bool Table::Load() {
   LOG(INFO) << "loading table file: " << file_path();
@@ -267,7 +268,7 @@ bool Table::Load() {
     Close();
     return false;
   }
-  if (strncmp(metadata_->format, kTableFormatPrefix, kTableFormatPrefixLen)) {
+  if (strncmp(metadata_->format, kTableFormatPrefix, kTableFormatPrefixLen) != 0) {
     LOG(ERROR) << "invalid metadata.";
     Close();
     return false;
@@ -383,21 +384,21 @@ table::HeadIndex* Table::BuildHeadIndex(const Vocabulary& vocabulary,
                                         size_t num_syllables) {
   auto index = CreateArray<table::HeadIndexNode>(num_syllables);
   if (!index) {
-    return NULL;
+    return nullptr;
   }
   for (const auto& v : vocabulary) {
     int syllable_id = v.first;
     auto& node(index->at[syllable_id]);
     const auto& entries(v.second.entries);
     if (!BuildEntryList(entries, &node.entries)) {
-      return NULL;
+      return nullptr;
     }
     if (v.second.next_level) {
       Code code;
       code.push_back(syllable_id);
       auto next_level_index = BuildTrunkIndex(code, *v.second.next_level);
       if (!next_level_index) {
-        return NULL;
+        return nullptr;
       }
       node.next_level = reinterpret_cast<table::PhraseIndex*>(next_level_index);
     }
@@ -409,7 +410,7 @@ table::TrunkIndex* Table::BuildTrunkIndex(const Code& prefix,
                                           const Vocabulary& vocabulary) {
   auto index = CreateArray<table::TrunkIndexNode>(vocabulary.size());
   if (!index) {
-    return NULL;
+    return nullptr;
   }
   size_t count = 0;
   for (const auto& v : vocabulary) {
@@ -418,7 +419,7 @@ table::TrunkIndex* Table::BuildTrunkIndex(const Code& prefix,
     node.key = syllable_id;
     const auto& entries(v.second.entries);
     if (!BuildEntryList(entries, &node.entries)) {
-      return NULL;
+      return nullptr;
     }
     if (v.second.next_level) {
       Code code(prefix);
@@ -426,14 +427,14 @@ table::TrunkIndex* Table::BuildTrunkIndex(const Code& prefix,
       if (code.size() < Code::kIndexCodeMaxLength) {
         auto next_level_index = BuildTrunkIndex(code, *v.second.next_level);
         if (!next_level_index) {
-          return NULL;
+          return nullptr;
         }
         node.next_level =
             reinterpret_cast<table::PhraseIndex*>(next_level_index);
       } else {
         auto tail_index = BuildTailIndex(code, *v.second.next_level);
         if (!tail_index) {
-          return NULL;
+          return nullptr;
         }
         node.next_level = reinterpret_cast<table::PhraseIndex*>(tail_index);
       }
@@ -445,13 +446,13 @@ table::TrunkIndex* Table::BuildTrunkIndex(const Code& prefix,
 table::TailIndex* Table::BuildTailIndex(const Code& prefix,
                                         const Vocabulary& vocabulary) {
   if (vocabulary.find(-1) == vocabulary.end()) {
-    return NULL;
+    return nullptr;
   }
   const auto& page(vocabulary.find(-1)->second);
   DLOG(INFO) << "page size: " << page.entries.size();
   auto index = CreateArray<table::LongEntry>(page.entries.size());
   if (!index) {
-    return NULL;
+    return nullptr;
   }
   size_t count = 0;
   for (const auto& src : page.entries) {
@@ -464,7 +465,7 @@ table::TailIndex* Table::BuildTailIndex(const Code& prefix,
     dest.extra_code.at = Allocate<SyllableId>(extra_code_length);
     if (!dest.extra_code.at) {
       LOG(ERROR) << "Error creating code sequence; file size: " << file_size();
-      return NULL;
+      return nullptr;
     }
     std::copy(src->code.begin() + Code::kIndexCodeMaxLength, src->code.end(),
               dest.extra_code.begin());
@@ -476,11 +477,11 @@ table::TailIndex* Table::BuildTailIndex(const Code& prefix,
 Array<table::Entry>* Table::BuildEntryArray(const ShortDictEntryList& entries) {
   auto array = CreateArray<table::Entry>(entries.size());
   if (!array) {
-    return NULL;
+    return nullptr;
   }
   for (size_t i = 0; i < entries.size(); ++i) {
     if (!BuildEntry(*entries[i], &array->at[i])) {
-      return NULL;
+      return nullptr;
     }
   }
   return array;
@@ -527,7 +528,7 @@ bool Table::GetSyllabary(Syllabary* result) {
 string Table::GetSyllableById(SyllableId syllable_id) {
   if (!syllabary_ || syllable_id < 0 ||
       syllable_id >= static_cast<SyllableId>(syllabary_->size))
-    return string();
+    return {};
   return GetString(syllabary_->at[syllable_id]);
 }
 
@@ -538,13 +539,13 @@ TableAccessor Table::QueryWords(SyllableId syllable_id) {
 
 TableAccessor Table::QueryPhrases(const Code& code) {
   if (code.empty())
-    return TableAccessor();
+    return {};
   TableQuery query(index_);
   for (size_t i = 0; i < Code::kIndexCodeMaxLength; ++i) {
     if (code.size() == i + 1)
       return query.Access(code[i]);
     if (!query.Advance(code[i]))
-      return TableAccessor();
+      return {};
   }
   return query.Access(-1);
 }
@@ -557,7 +558,7 @@ bool Table::Query(const SyllableGraph& syll_graph,
   result->clear();
   std::queue<pair<size_t, TableQuery>> q;
   TableQuery initial_state(index_);
-  q.push({start_pos, initial_state});
+  q.emplace(start_pos, initial_state);
   while (!q.empty()) {
     size_t current_pos = q.front().first;
     TableQuery query(q.front().second);
@@ -583,7 +584,7 @@ bool Table::Query(const SyllableGraph& syll_graph,
         }
         if (end_pos < syll_graph.interpreted_length &&
             query.Advance(syll_id, props->credibility)) {
-          q.push({end_pos, query});
+          q.emplace(end_pos, query);
           query.Backdate();
         }
       }
