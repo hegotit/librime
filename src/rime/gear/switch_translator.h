@@ -13,7 +13,7 @@ namespace rime {
 
 class SwitchTranslator : public Translator {
  public:
-  SwitchTranslator(const Ticket& ticket);
+  explicit SwitchTranslator(const Ticket& ticket);
 
   an<Translation> Query(const string& input, const Segment& segment) override;
 };

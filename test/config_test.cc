@@ -9,18 +9,20 @@
 #include <rime/component.h>
 #include <rime/config.h>
 
+#include <memory>
+
 using namespace rime;
 
 class RimeConfigTest : public ::testing::Test {
  protected:
   RimeConfigTest() = default;
 
-  virtual void SetUp() {
-    component_.reset(new ConfigComponent<ConfigLoader>);
+  void SetUp() override {
+    component_ = std::make_unique<ConfigComponent<ConfigLoader>>();
     config_.reset(component_->Create("config_test"));
   }
 
-  virtual void TearDown() {}
+  void TearDown() override {}
 
   the<Config::Component> component_;
   the<Config> config_;
@@ -34,7 +36,7 @@ TEST(RimeConfigComponentTest, RoundTrip) {
                  [](ConfigLoader* loader) { loader->set_auto_save(true); }));
   // find component
   Config::Component* cc = Config::Require("test_config");
-  ASSERT_TRUE(cc != NULL);
+  ASSERT_TRUE(cc != nullptr);
   // create config and write modifications to file
   {
     the<Config> config(cc->Create("config_round_trip_test"));

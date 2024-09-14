@@ -12,6 +12,9 @@
 #include <rime/dict/level_db.h>
 #include <rime/dict/user_db.h>
 
+#include <memory>
+#include <utility>
+
 namespace rime {
 
 static const char* kMetaCharacter = "\x01";
@@ -141,8 +144,8 @@ bool LevelDbAccessor::exhausted() {
 
 LevelDb::LevelDb(const path& file_path,
                  const string& db_name,
-                 const string& db_type)
-    : Db(file_path, db_name), db_type_(db_type) {}
+                 string  db_type)
+    : Db(file_path, db_name), db_type_(std::move(db_type)) {}
 
 LevelDb::~LevelDb() {
   if (loaded())
@@ -150,7 +153,7 @@ LevelDb::~LevelDb() {
 }
 
 void LevelDb::Initialize() {
-  db_.reset(new LevelDbWrapper);
+  db_ = std::make_unique<LevelDbWrapper>();
 }
 
 an<DbAccessor> LevelDb::QueryMetadata() {

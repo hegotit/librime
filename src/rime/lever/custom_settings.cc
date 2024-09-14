@@ -5,6 +5,7 @@
 // 2012-02-26 GONG Chen <chen.sst@gmail.com>
 //
 #include <boost/algorithm/string.hpp>
+#include <utility>
 #include <rime/config.h>
 #include <rime/deployer.h>
 #include <rime/signature.h>
@@ -23,9 +24,9 @@ static string custom_config_file(const string& config_id) {
 }
 
 CustomSettings::CustomSettings(Deployer* deployer,
-                               const string& config_id,
-                               const string& generator_id)
-    : deployer_(deployer), config_id_(config_id), generator_id_(generator_id) {}
+                               string  config_id,
+                               string  generator_id)
+    : deployer_(deployer), config_id_(std::move(config_id)), generator_id_(std::move(generator_id)) {}
 
 bool CustomSettings::Load() {
   path config_path = deployer_->staging_dir / (config_id_ + ".yaml");

@@ -22,7 +22,7 @@ bool BuildInfoPlugin::ReviewLinkOutput(ConfigCompiler* compiler,
   build_info["rime_version"] = RIME_VERSION;
 #ifndef RIME_NO_TIMESTAMP
   auto timestamps = build_info["timestamps"];
-  compiler->EnumerateResources([&](an<ConfigResource> resource) {
+  compiler->EnumerateResources([&](const an<ConfigResource>& resource) {
     if (!resource->loaded) {
       LOG(INFO) << "resource '" << resource->resource_id << "' not loaded.";
       timestamps[resource->resource_id] = 0;

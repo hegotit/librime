@@ -18,7 +18,7 @@ using UserDictList = vector<string>;
 
 class RIME_API UserDictManager {
  public:
-  UserDictManager(Deployer* deployer);
+  explicit UserDictManager(Deployer* deployer);
 
   // If component is null, the current userdb component is used.
   void GetUserDictList(UserDictList* user_dict_list,

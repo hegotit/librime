@@ -13,9 +13,9 @@ namespace rime {
 
 class EchoTranslator : public Translator {
  public:
-  EchoTranslator(const Ticket& ticket);
+  explicit EchoTranslator(const Ticket& ticket);
 
-  virtual an<Translation> Query(const string& input, const Segment& segment);
+  an<Translation> Query(const string& input, const Segment& segment) override;
 };
 
 }  // namespace rime

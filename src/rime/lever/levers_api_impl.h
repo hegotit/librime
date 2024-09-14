@@ -63,7 +63,7 @@ static Bool rime_levers_customize_item(RimeCustomSettings* settings,
                                        RimeConfig* value) {
   an<ConfigItem> item;
   if (value) {
-    if (Config* v = reinterpret_cast<Config*>(value->ptr)) {
+    if (auto* v = reinterpret_cast<Config*>(value->ptr)) {
       item = v->GetItem("");
     }
   }
@@ -84,7 +84,7 @@ static Bool rime_levers_settings_get_config(RimeCustomSettings* settings,
   if (!config)
     return False;
   config->ptr = reinterpret_cast<CustomSettings*>(settings)->config();
-  return Bool(!!config->ptr);
+  return Bool(config->ptr != nullptr);
 }
 
 static RimeSwitcherSettings* rime_levers_switcher_settings_init() {
@@ -97,7 +97,7 @@ static Bool rime_levers_get_available_schema_list(
     RimeSchemaList* list) {
   auto ss = reinterpret_cast<SwitcherSettings*>(settings);
   list->size = 0;
-  list->list = NULL;
+  list->list = nullptr;
   if (ss->available().empty()) {
     return False;
   }
@@ -116,7 +116,7 @@ static Bool rime_levers_get_selected_schema_list(RimeSwitcherSettings* settings,
                                                  RimeSchemaList* list) {
   auto ss = reinterpret_cast<SwitcherSettings*>(settings);
   list->size = 0;
-  list->list = NULL;
+  list->list = nullptr;
   if (ss->selection().empty()) {
     return False;
   }
@@ -124,8 +124,8 @@ static Bool rime_levers_get_selected_schema_list(RimeSwitcherSettings* settings,
   for (const string& schema_id : ss->selection()) {
     auto& item(list->list[list->size]);
     item.schema_id = const_cast<char*>(schema_id.c_str());
-    item.name = NULL;
-    item.reserved = NULL;
+    item.name = nullptr;
+    item.reserved = nullptr;
     ++list->size;
   }
   return True;
@@ -134,36 +134,36 @@ static Bool rime_levers_get_selected_schema_list(RimeSwitcherSettings* settings,
 static void rime_levers_schema_list_destroy(RimeSchemaList* list) {
   delete[] list->list;
   list->size = 0;
-  list->list = NULL;
+  list->list = nullptr;
 }
 
 static const char* rime_levers_get_schema_id(RimeSchemaInfo* info) {
   auto si = reinterpret_cast<SchemaInfo*>(info);
-  return si && !si->schema_id.empty() ? si->schema_id.c_str() : NULL;
+  return si && !si->schema_id.empty() ? si->schema_id.c_str() : nullptr;
 }
 
 static const char* rime_levers_get_schema_name(RimeSchemaInfo* info) {
   auto si = reinterpret_cast<SchemaInfo*>(info);
-  return si && !si->name.empty() ? si->name.c_str() : NULL;
+  return si && !si->name.empty() ? si->name.c_str() : nullptr;
 }
 
 static const char* rime_levers_get_schema_version(RimeSchemaInfo* info) {
   auto si = reinterpret_cast<SchemaInfo*>(info);
-  return si && !si->version.empty() ? si->version.c_str() : NULL;
+  return si && !si->version.empty() ? si->version.c_str() : nullptr;
 }
 static const char* rime_levers_get_schema_author(RimeSchemaInfo* info) {
   auto si = reinterpret_cast<SchemaInfo*>(info);
-  return si && !si->author.empty() ? si->author.c_str() : NULL;
+  return si && !si->author.empty() ? si->author.c_str() : nullptr;
 }
 
 static const char* rime_levers_get_schema_description(RimeSchemaInfo* info) {
   auto si = reinterpret_cast<SchemaInfo*>(info);
-  return si && !si->description.empty() ? si->description.c_str() : NULL;
+  return si && !si->description.empty() ? si->description.c_str() : nullptr;
 }
 
 static const char* rime_levers_get_schema_file_path(RimeSchemaInfo* info) {
   auto si = reinterpret_cast<SchemaInfo*>(info);
-  return si && !si->file_path.empty() ? si->file_path.c_str() : NULL;
+  return si && !si->file_path.empty() ? si->file_path.c_str() : nullptr;
 }
 
 static Bool rime_levers_select_schemas(RimeSwitcherSettings* settings,
@@ -172,14 +172,14 @@ static Bool rime_levers_select_schemas(RimeSwitcherSettings* settings,
   auto ss = reinterpret_cast<SwitcherSettings*>(settings);
   SwitcherSettings::Selection selection;
   for (int i = 0; i < count; ++i) {
-    selection.push_back(schema_id_list[i]);
+    selection.emplace_back(schema_id_list[i]);
   }
   return ss->Select(selection);
 }
 
 static const char* rime_levers_get_hotkeys(RimeSwitcherSettings* settings) {
   auto ss = reinterpret_cast<SwitcherSettings*>(settings);
-  return !ss->hotkeys().empty() ? ss->hotkeys().c_str() : NULL;
+  return !ss->hotkeys().empty() ? ss->hotkeys().c_str() : nullptr;
 }
 
 static Bool rime_levers_set_hotkeys(RimeSwitcherSettings* settings,
@@ -190,7 +190,7 @@ static Bool rime_levers_set_hotkeys(RimeSwitcherSettings* settings,
 
 static Bool rime_levers_user_dict_iterator_init(RimeUserDictIterator* iter) {
   UserDictManager mgr(&Service::instance().deployer());
-  UserDictList* list = new UserDictList;
+  auto* list = new UserDictList;
   mgr.GetUserDictList(list);
   if (list->empty()) {
     delete list;
@@ -203,14 +203,14 @@ static Bool rime_levers_user_dict_iterator_init(RimeUserDictIterator* iter) {
 
 static void rime_levers_user_dict_iterator_destroy(RimeUserDictIterator* iter) {
   delete (UserDictList*)iter->ptr;
-  iter->ptr = NULL;
+  iter->ptr = nullptr;
   iter->i = 0;
 }
 
 static const char* rime_levers_next_user_dict(RimeUserDictIterator* iter) {
   auto list = reinterpret_cast<UserDictList*>(iter->ptr);
   if (!list || iter->i >= list->size()) {
-    return NULL;
+    return nullptr;
   }
   return (*list)[iter->i++].c_str();
 }

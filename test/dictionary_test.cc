@@ -13,7 +13,7 @@
 
 class RimeDictionaryTest : public ::testing::Test {
  public:
-  virtual void SetUp() {
+  void SetUp() override {
     if (!dict_) {
       dict_.reset(new rime::Dictionary(
           "dictionary_test", {},
@@ -28,7 +28,7 @@ class RimeDictionaryTest : public ::testing::Test {
     }
     dict_->Load();
   }
-  virtual void TearDown() { dict_.reset(); }
+  void TearDown() override { dict_.reset(); }
 
  protected:
   static rime::the<rime::Dictionary> dict_;

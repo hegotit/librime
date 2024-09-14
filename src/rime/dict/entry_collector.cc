@@ -213,7 +213,7 @@ void EntryCollector::CreateEntry(const string& word,
                    << code_str << "].";
       return;
     }
-    weights.push_back(std::make_pair(code_str, e->weight));
+    weights.emplace_back(code_str, e->weight);
     total_weight[e->text] += e->weight;
   }
   entries.emplace_back(std::move(e));

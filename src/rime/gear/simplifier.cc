@@ -7,6 +7,7 @@
 #include <boost/algorithm/string.hpp>
 #include <stdint.h>
 #include <utf8.h>
+#include <memory>
 #include <utility>
 #include <rime/candidate.h>
 #include <rime/common.h>
@@ -31,7 +32,7 @@ namespace rime {
 
 class Opencc {
  public:
-  Opencc(const path& config_path) {
+  explicit Opencc(const path& config_path) {
     LOG(INFO) << "initializing opencc: " << config_path;
     opencc::Config config;
     try {
@@ -54,7 +55,7 @@ class Opencc {
         converter_->GetConversionChain()->GetConversions();
     vector<string> original_words{text};
     bool matched = false;
-    for (auto conversion : conversions) {
+    for (const auto& conversion : conversions) {
       opencc::DictPtr dict = conversion->GetDict();
       if (dict == nullptr) {
         return false;
@@ -107,7 +108,7 @@ class Opencc {
       return false;
     }
     *forms = std::move(original_words);
-    return forms->size() > 0;
+    return !forms->empty();
   }
 
   bool RandomConvertText(const string& text, string* simplified) {
@@ -116,7 +117,7 @@ class Opencc {
     const list<opencc::ConversionPtr> conversions =
         converter_->GetConversionChain()->GetConversions();
     const char* phrase = text.c_str();
-    for (auto conversion : conversions) {
+    for (const auto& conversion : conversions) {
       opencc::DictPtr dict = conversion->GetDict();
       if (dict == nullptr) {
         return false;
@@ -176,8 +177,8 @@ Simplifier::Simplifier(const Ticket& ticket)
     config->GetString(name_space_ + "/option_name", &option_name_);
     config->GetString(name_space_ + "/opencc_config", &opencc_config_);
     if (auto types = config->GetList(name_space_ + "/excluded_types")) {
-      for (auto it = types->begin(); it != types->end(); ++it) {
-        if (auto value = As<ConfigValue>(*it)) {
+      for (auto & it : *types) {
+        if (auto value = As<ConfigValue>(it)) {
           excluded_types_.insert(value->str());
         }
       }
@@ -190,7 +191,7 @@ Simplifier::Simplifier(const Ticket& ticket)
     opencc_config_ = "t2s.json";  // default opencc config file
   }
   if (random_) {
-    srand((unsigned)time(NULL));
+    srand((unsigned)time(nullptr));
   }
 }
 
@@ -213,7 +214,7 @@ void Simplifier::Initialize() {
     }
   }
   try {
-    opencc_.reset(new Opencc(opencc_config_path));
+    opencc_ = std::make_unique<Opencc>(opencc_config_path);
   } catch (opencc::Exception& e) {
     LOG(ERROR) << "Error initializing opencc: " << e.what();
   }
@@ -222,10 +223,10 @@ void Simplifier::Initialize() {
 class SimplifiedTranslation : public PrefetchTranslation {
  public:
   SimplifiedTranslation(an<Translation> translation, Simplifier* simplifier)
-      : PrefetchTranslation(translation), simplifier_(simplifier) {}
+      : PrefetchTranslation(std::move(translation)), simplifier_(simplifier) {}
 
  protected:
-  virtual bool Replenish();
+  bool Replenish() override;
 
   Simplifier* simplifier_;
 };
@@ -299,11 +300,11 @@ bool Simplifier::Convert(const an<Candidate>& original,
     vector<string> forms;
     success = opencc_->ConvertWord(original->text(), &forms);
     if (success) {
-      for (size_t i = 0; i < forms.size(); ++i) {
-        if (forms[i] == original->text()) {
+      for (const auto& form : forms) {
+        if (form == original->text()) {
           result->push_back(original);
         } else {
-          PushBack(original, result, forms[i]);
+          PushBack(original, result, form);
         }
       }
     } else {

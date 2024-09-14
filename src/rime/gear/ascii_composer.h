@@ -29,10 +29,10 @@ using AsciiModeSwitchKeyBindings = map<int /* keycode */, AsciiModeSwitchStyle>;
 
 class AsciiComposer : public Processor {
  public:
-  AsciiComposer(const Ticket& ticket);
-  ~AsciiComposer();
+  explicit AsciiComposer(const Ticket& ticket);
+  ~AsciiComposer() override;
 
-  virtual ProcessResult ProcessKeyEvent(const KeyEvent& key_event);
+  ProcessResult ProcessKeyEvent(const KeyEvent& key_event) override;
 
  protected:
   ProcessResult ProcessCapsLock(const KeyEvent& key_event);

@@ -10,6 +10,8 @@
 #include <rime/gear/single_char_filter.h>
 #include <rime/gear/translator_commons.h>
 
+#include <utility>
+
 namespace rime {
 
 static inline size_t unistrlen(const string& text) {
@@ -18,7 +20,7 @@ static inline size_t unistrlen(const string& text) {
 
 class SingleCharFirstTranslation : public PrefetchTranslation {
  public:
-  SingleCharFirstTranslation(an<Translation> translation);
+  explicit SingleCharFirstTranslation(an<Translation> translation);
 
  private:
   bool Rearrange();
@@ -26,7 +28,7 @@ class SingleCharFirstTranslation : public PrefetchTranslation {
 
 SingleCharFirstTranslation::SingleCharFirstTranslation(
     an<Translation> translation)
-    : PrefetchTranslation(translation) {
+    : PrefetchTranslation(std::move(translation)) {
   Rearrange();
 }
 

@@ -42,7 +42,7 @@ class KeyBindingProcessor {
                                 int fallback_options = FallbackOptions::None);
   void LoadConfig(Config* config,
                   const string& section,
-                  int kemap_selector = 0);
+                  int keymap_selector = 0);
 
  protected:
   struct Keymap : map<KeyEvent, HandlerPtr> {

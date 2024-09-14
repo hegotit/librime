@@ -5,6 +5,7 @@
 // 2013-05-26 GONG Chen <chen.sst@gmail.com>
 //
 #include <boost/algorithm/string.hpp>
+#include <utility>
 #include <rime/candidate.h>
 #include <rime/common.h>
 #include <rime/config.h>
@@ -90,10 +91,10 @@ class RadioOption : public SimpleCandidate, public SwitcherCommand {
               const string& option_name)
       : SimpleCandidate("switch", 0, 0, state_label),
         SwitcherCommand(option_name),
-        group_(group) {}
+        group_(std::move(group)) {}
   void Apply(Switcher* switcher) override;
   void UpdateState(bool selected);
-  bool selected() const { return selected_; }
+  [[nodiscard]] bool selected() const { return selected_; }
 
  protected:
   an<RadioGroup> group_;
@@ -122,10 +123,10 @@ void RadioGroup::SelectOption(RadioOption* option) {
   if (!option)
     return;
   Config* user_config = switcher_->user_config();
-  for (auto it = options_.begin(); it != options_.end(); ++it) {
-    bool selected = (*it == option);
-    (*it)->UpdateState(selected);
-    const string& option_name((*it)->keyword());
+  for (auto& it : options_) {
+    bool selected = (it == option);
+    it->UpdateState(selected);
+    const string& option_name(it->keyword());
     if (context_->get_option(option_name) != selected) {
       context_->set_option(option_name, selected);
       if (user_config && switcher_->IsAutoSave(option_name)) {
@@ -137,17 +138,17 @@ void RadioGroup::SelectOption(RadioOption* option) {
 
 RadioOption* RadioGroup::GetSelectedOption() const {
   if (options_.empty())
-    return NULL;
-  for (auto it = options_.begin(); it != options_.end(); ++it) {
-    if (context_->get_option((*it)->keyword()))
-      return *it;
+    return nullptr;
+  for (auto option : options_) {
+    if (context_->get_option(option->keyword()))
+      return option;
   }
   return options_[0];
 }
 
 class FoldedOptions : public SimpleCandidate, public SwitcherCommand {
  public:
-  FoldedOptions(Config* config)
+  explicit FoldedOptions(Config* config)
       : SimpleCandidate("unfold", 0, 0, ""), SwitcherCommand("_fold_options") {
     LoadConfig(config);
   }
@@ -155,7 +156,7 @@ class FoldedOptions : public SimpleCandidate, public SwitcherCommand {
   void Append(const SwitchOption& option, size_t state_index);
   void Finish();
 
-  size_t size() const { return labels_.size(); }
+  [[nodiscard]] size_t size() const { return labels_.size(); }
 
  private:
   void LoadConfig(Config* config);
@@ -194,7 +195,7 @@ void FoldedOptions::Finish() {
 
 class SwitchTranslation : public FifoTranslation {
  public:
-  SwitchTranslation(Switcher* switcher) { LoadSwitches(switcher); }
+  explicit SwitchTranslation(Switcher* switcher) { LoadSwitches(switcher); }
 
  protected:
   void LoadSwitches(Switcher* switcher);
@@ -212,7 +213,7 @@ void SwitchTranslation::LoadSwitches(Switcher* switcher) {
   Switches switches(config);
   switches.FindOption(
       [this, switcher, context,
-       &groups](Switches::SwitchOption option) -> Switches::FindResult {
+       &groups](const Switches::SwitchOption& option) -> Switches::FindResult {
         if (!has_state_label(option, 0)) {
           return Switches::kContinue;
         }
@@ -239,7 +240,7 @@ void SwitchTranslation::LoadSwitches(Switcher* switcher) {
     auto folded_options = New<FoldedOptions>(switcher->schema()->config());
     switches.FindOption(
         [context, &folded_options](
-            Switches::SwitchOption option) -> Switches::FindResult {
+            const Switches::SwitchOption& option) -> Switches::FindResult {
           bool current_state = context->get_option(option.option_name);
           if (option.type == Switches::kToggleOption) {
             if (has_state_label(option, current_state)) {

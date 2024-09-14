@@ -7,6 +7,8 @@
 #include <rime/dict/db_utils.h>
 #include <rime/dict/text_db.h>
 
+#include <utility>
+
 namespace rime {
 
 // TextDbAccessor members
@@ -16,7 +18,7 @@ TextDbAccessor::TextDbAccessor(const TextDbData& data, const string& prefix)
   Reset();
 }
 
-TextDbAccessor::~TextDbAccessor() {}
+TextDbAccessor::~TextDbAccessor() = default;
 
 bool TextDbAccessor::Reset() {
   iter_ = prefix_.empty() ? data_.begin() : data_.lower_bound(prefix_);
@@ -45,9 +47,9 @@ bool TextDbAccessor::exhausted() {
 
 TextDb::TextDb(const path& file_path,
                const string& db_name,
-               const string& db_type,
+               string  db_type,
                TextFormat format)
-    : Db(file_path, db_name), db_type_(db_type), format_(format) {}
+    : Db(file_path, db_name), db_type_(std::move(db_type)), format_(std::move(format)) {}
 
 TextDb::~TextDb() {
   if (loaded())
@@ -73,7 +75,7 @@ an<DbAccessor> TextDb::Query(const string& key) {
 bool TextDb::Fetch(const string& key, string* value) {
   if (!value || !loaded())
     return false;
-  TextDbData::const_iterator it = data_.find(key);
+  auto it = data_.find(key);
   if (it == data_.end())
     return false;
   *value = it->second;
@@ -184,7 +186,7 @@ bool TextDb::CreateMetadata() {
 bool TextDb::MetaFetch(const string& key, string* value) {
   if (!value || !loaded())
     return false;
-  TextDbData::const_iterator it = metadata_.find(key);
+  auto it = metadata_.find(key);
   if (it == metadata_.end())
     return false;
   *value = it->second;

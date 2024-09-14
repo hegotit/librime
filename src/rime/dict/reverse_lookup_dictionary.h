@@ -51,8 +51,8 @@ class ReverseDb : public MappedFile {
              uint32_t dict_file_checksum);
   bool Save();
 
-  uint32_t dict_file_checksum() const;
-  reverse::Metadata* metadata() const { return metadata_; }
+  [[nodiscard]] uint32_t dict_file_checksum() const;
+  [[nodiscard]] reverse::Metadata* metadata() const { return metadata_; }
 
  private:
   reverse::Metadata* metadata_ = nullptr;
@@ -80,7 +80,7 @@ class ReverseLookupDictionaryComponent
       protected DbPool<ReverseDb> {
  public:
   ReverseLookupDictionaryComponent();
-  ReverseLookupDictionary* Create(const Ticket& ticket);
+  ReverseLookupDictionary* Create(const Ticket& ticket) override;
   ReverseLookupDictionary* Create(const string& dict_name);
 };
 

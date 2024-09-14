@@ -28,20 +28,20 @@ class ScriptTranslator : public Translator,
                          public Memory,
                          public TranslatorOptions {
  public:
-  ScriptTranslator(const Ticket& ticket);
+  explicit ScriptTranslator(const Ticket& ticket);
 
-  virtual an<Translation> Query(const string& input, const Segment& segment);
-  virtual bool Memorize(const CommitEntry& commit_entry);
+  an<Translation> Query(const string& input, const Segment& segment) override;
+  bool Memorize(const CommitEntry& commit_entry) override;
 
   string FormatPreedit(const string& preedit);
   string Spell(const Code& code);
-  string GetPrecedingText(size_t start) const;
+  [[nodiscard]] string GetPrecedingText(size_t start) const;
 
   // options
-  int max_homophones() const { return max_homophones_; }
-  int spelling_hints() const { return spelling_hints_; }
-  bool always_show_comments() const { return always_show_comments_; }
-  bool enable_word_completion() const { return enable_word_completion_; }
+  [[nodiscard]] int max_homophones() const { return max_homophones_; }
+  [[nodiscard]] int spelling_hints() const { return spelling_hints_; }
+  [[nodiscard]] bool always_show_comments() const { return always_show_comments_; }
+  [[nodiscard]] bool enable_word_completion() const { return enable_word_completion_; }
 
  protected:
   int max_homophones_ = 1;

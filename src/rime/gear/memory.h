@@ -25,16 +25,16 @@ struct CommitEntry : DictEntry {
   vector<const DictEntry*> elements;
   Memory* memory;
 
-  CommitEntry(Memory* a_memory = NULL) : memory(a_memory) {}
-  bool empty() const { return text.empty(); }
+  explicit CommitEntry(Memory* a_memory = nullptr) : memory(a_memory) {}
+  [[nodiscard]] bool empty() const { return text.empty(); }
   void Clear();
   void AppendPhrase(const an<Phrase>& phrase);
-  bool Save() const;
+  [[nodiscard]] bool Save() const;
 };
 
 class Memory {
  public:
-  Memory(const Ticket& ticket);
+  explicit Memory(const Ticket& ticket);
   virtual ~Memory();
 
   virtual bool Memorize(const CommitEntry& commit_entry) = 0;
@@ -43,10 +43,10 @@ class Memory {
   bool FinishSession();
   bool DiscardSession();
 
-  Dictionary* dict() const { return dict_.get(); }
-  UserDictionary* user_dict() const { return user_dict_.get(); }
+  [[nodiscard]] Dictionary* dict() const { return dict_.get(); }
+  [[nodiscard]] UserDictionary* user_dict() const { return user_dict_.get(); }
 
-  const Language* language() const { return language_.get(); }
+  [[nodiscard]] const Language* language() const { return language_.get(); }
 
  protected:
   void OnCommit(Context* ctx);

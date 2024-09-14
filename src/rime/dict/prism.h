@@ -22,9 +22,9 @@ namespace prism {
 using Credibility = float;
 
 struct SpellingDescriptor {
-  SyllableId syllable_id;
-  int32_t type;
-  Credibility credibility;
+  SyllableId syllable_id{};
+  int32_t type{};
+  Credibility credibility{};
   String tips;
 };
 
@@ -51,9 +51,9 @@ class SpellingAccessor {
  public:
   SpellingAccessor(prism::SpellingMap* spelling_map, SyllableId spelling_id);
   bool Next();
-  bool exhausted() const;
-  SyllableId syllable_id() const;
-  SpellingProperties properties() const;
+  [[nodiscard]] bool exhausted() const;
+  [[nodiscard]] SyllableId syllable_id() const;
+  [[nodiscard]] SpellingProperties properties() const;
 
  protected:
   SyllableId spelling_id_;
@@ -84,11 +84,11 @@ class Prism : public MappedFile {
                              size_t limit);
   SpellingAccessor QuerySpelling(SyllableId spelling_id);
 
-  RIME_API size_t array_size() const;
+  [[nodiscard]] RIME_API size_t array_size() const;
 
-  uint32_t dict_file_checksum() const;
-  uint32_t schema_file_checksum() const;
-  Darts::DoubleArray& trie() const { return *trie_; }
+  [[nodiscard]] uint32_t dict_file_checksum() const;
+  [[nodiscard]] uint32_t schema_file_checksum() const;
+  [[nodiscard]] Darts::DoubleArray& trie() const { return *trie_; }
 
  protected:
   the<Darts::DoubleArray> trie_;

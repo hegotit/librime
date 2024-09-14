@@ -26,8 +26,8 @@ class UserDictEntryIterator : public DictEntryFilterBinder {
   void AddFilter(DictEntryFilter filter) override;
   an<DictEntry> Peek();
   bool Next();
-  bool exhausted() const { return index_ >= cache_.size(); }
-  size_t cache_size() const { return cache_.size(); }
+  [[nodiscard]] bool exhausted() const { return index_ >= cache_.size(); }
+  [[nodiscard]] size_t cache_size() const { return cache_.size(); }
 
  protected:
   bool FindNextEntry();
@@ -48,13 +48,13 @@ struct Ticket;
 
 class UserDictionary : public Class<UserDictionary, const Ticket&> {
  public:
-  UserDictionary(const string& name, an<Db> db);
+  UserDictionary(string  name, an<Db> db);
   virtual ~UserDictionary();
 
   void Attach(const an<Table>& table, const an<Prism>& prism);
   bool Load();
-  bool loaded() const;
-  bool readonly() const;
+  [[nodiscard]] bool loaded() const;
+  [[nodiscard]] bool readonly() const;
 
   an<UserDictEntryCollector> Lookup(const SyllableGraph& syllable_graph,
                                     size_t start_pos,
@@ -65,7 +65,7 @@ class UserDictionary : public Class<UserDictionary, const Ticket&> {
                      const string& input,
                      bool predictive,
                      size_t limit = 0,
-                     string* resume_key = NULL);
+                     string* resume_key = nullptr);
   bool UpdateEntry(const DictEntry& entry, int commits);
   bool UpdateEntry(const DictEntry& entry,
                    int commits,
@@ -76,8 +76,8 @@ class UserDictionary : public Class<UserDictionary, const Ticket&> {
   bool RevertRecentTransaction();
   bool CommitPendingTransaction();
 
-  const string& name() const { return name_; }
-  TickCount tick() const { return tick_; }
+  [[nodiscard]] const string& name() const { return name_; }
+  [[nodiscard]] TickCount tick() const { return tick_; }
 
   static an<DictEntry> CreateDictEntry(const string& key,
                                        const string& value,
@@ -108,7 +108,7 @@ class UserDictionary : public Class<UserDictionary, const Ticket&> {
 class UserDictionaryComponent : public UserDictionary::Component {
  public:
   UserDictionaryComponent();
-  UserDictionary* Create(const Ticket& ticket);
+  UserDictionary* Create(const Ticket& ticket) override;
   UserDictionary* Create(const string& dict_name, const string& db_class);
 
  private:

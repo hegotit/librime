@@ -23,9 +23,9 @@ struct UserDbValue {
   TickCount tick = 0;
 
   UserDbValue() = default;
-  UserDbValue(const string& value);
+  explicit UserDbValue(const string& value);
 
-  string Pack() const;
+  [[nodiscard]] string Pack() const;
   bool Unpack(const string& value);
 };
 
@@ -43,7 +43,7 @@ class UserDb {
   /// Abstract class for a user db component.
   class Component : public Db::Component {
    public:
-    virtual string extension() const = 0;
+    [[nodiscard]] virtual string extension() const = 0;
   };
 
   /// Requires a registered component for a user db class.
@@ -57,9 +57,9 @@ class UserDb {
 /// A helper class to provide extra functionalities related to user db.
 class UserDbHelper {
  public:
-  UserDbHelper(Db* db) : db_(db) {}
-  UserDbHelper(const the<Db>& db) : db_(db.get()) {}
-  UserDbHelper(const an<Db>& db) : db_(db.get()) {}
+  explicit UserDbHelper(Db* db) : db_(db) {}
+  explicit UserDbHelper(const the<Db>& db) : db_(db.get()) {}
+  explicit UserDbHelper(const an<Db>& db) : db_(db.get()) {}
 
   RIME_API bool UpdateUserInfo();
   RIME_API static bool IsUniformFormat(const path& file_path);
@@ -105,16 +105,16 @@ class UserDbComponent : public UserDb::Component, protected DbComponentBase {
     return new UserDbImpl(DbFilePath(name, extension()), name);
   }
 
-  string extension() const override;
+  [[nodiscard]] string extension() const override;
 };
 
 class UserDbMerger : public Sink {
  public:
   explicit UserDbMerger(Db* db);
-  virtual ~UserDbMerger();
+  ~UserDbMerger() override;
 
-  virtual bool MetaPut(const string& key, const string& value);
-  virtual bool Put(const string& key, const string& value);
+  bool MetaPut(const string& key, const string& value) override;
+  bool Put(const string& key, const string& value) override;
 
   void CloseMerge();
 
@@ -123,15 +123,15 @@ class UserDbMerger : public Sink {
   TickCount our_tick_;
   TickCount their_tick_;
   TickCount max_tick_;
-  int merged_entries_;
+  int merged_entries_{};
 };
 
 class UserDbImporter : public Sink {
  public:
   explicit UserDbImporter(Db* db);
 
-  virtual bool MetaPut(const string& key, const string& value);
-  virtual bool Put(const string& key, const string& value);
+  bool MetaPut(const string& key, const string& value) override;
+  bool Put(const string& key, const string& value) override;
 
  protected:
   Db* db_;

@@ -1,4 +1,5 @@
 #include <boost/algorithm/string.hpp>
+#include <utility>
 #include <rime/common.h>
 #include <rime/resource.h>
 #include <rime/config/config_compiler.h>
@@ -25,9 +26,9 @@ struct ConfigDependencyGraph {
   // paths for checking circular dependencies
   vector<string> resolve_chain;
 
-  void Add(an<Dependency> dependency);
+  void Add(const an<Dependency>& dependency);
 
-  void Push(an<ConfigItemRef> item, const string& key) {
+  void Push(const an<ConfigItemRef>& item, const string& key) {
     node_stack.push_back(item);
     key_stack.push_back(key);
   }
@@ -37,7 +38,7 @@ struct ConfigDependencyGraph {
     key_stack.pop_back();
   }
 
-  string current_resource_id() const;
+  [[nodiscard]] string current_resource_id() const;
 };
 
 string ConfigDependencyGraph::current_resource_id() const {
@@ -57,7 +58,7 @@ bool PendingChild::Resolve(ConfigCompiler* compiler) {
 static an<ConfigItem> ResolveReference(ConfigCompiler* compiler,
                                        const Reference& reference);
 
-static bool MergeTree(an<ConfigItemRef> target, an<ConfigMap> map);
+static bool MergeTree(const an<ConfigItemRef>& target, const an<ConfigMap>& map);
 
 bool IncludeReference::Resolve(ConfigCompiler* compiler) {
   DLOG(INFO) << "IncludeReference::Resolve(reference = " << reference << ")";
@@ -89,7 +90,7 @@ bool PatchReference::Resolve(ConfigCompiler* compiler) {
   return patch.TargetedAt(target).Resolve(compiler);
 }
 
-static bool AppendToString(an<ConfigItemRef> target, an<ConfigValue> value) {
+static bool AppendToString(const an<ConfigItemRef>& target, const an<ConfigValue>& value) {
   if (!value)
     return false;
   auto existing_value = As<ConfigValue>(**target);
@@ -101,7 +102,7 @@ static bool AppendToString(an<ConfigItemRef> target, an<ConfigValue> value) {
   return true;
 }
 
-static bool AppendToList(an<ConfigItemRef> target, an<ConfigList> list) {
+static bool AppendToList(const an<ConfigItemRef>& target, const an<ConfigList>& list) {
   if (!list)
     return false;
   auto existing_list = As<ConfigList>(**target);
@@ -117,7 +118,7 @@ static bool AppendToList(an<ConfigItemRef> target, an<ConfigList> list) {
   if (list->empty())
     return true;
   auto copy = New<ConfigList>(*existing_list);
-  for (ConfigList::Iterator iter = list->begin(); iter != list->end(); ++iter) {
+  for (auto iter = list->begin(); iter != list->end(); ++iter) {
     if (!copy->Append(*iter))
       return false;
   }
@@ -125,18 +126,18 @@ static bool AppendToList(an<ConfigItemRef> target, an<ConfigList> list) {
   return true;
 }
 
-static bool EditNode(an<ConfigItemRef> target,
+static bool EditNode(an<ConfigItemRef> head,
                      const string& key,
                      const an<ConfigItem>& value,
                      bool merge_tree);
 
-static bool MergeTree(an<ConfigItemRef> target, an<ConfigMap> map) {
+static bool MergeTree(const an<ConfigItemRef>& target, const an<ConfigMap>& map) {
   if (!map)
     return false;
   // NOTE: the referenced content of target can be any type
-  for (ConfigMap::Iterator iter = map->begin(); iter != map->end(); ++iter) {
-    const auto& key = iter->first;
-    const auto& value = iter->second;
+  for (auto & iter : *map) {
+    const auto& key = iter.first;
+    const auto& value = iter.second;
     if (!EditNode(target, key, value, true)) {
       LOG(ERROR) << "error merging branch " << key;
       return false;
@@ -187,7 +188,7 @@ static bool EditNode(an<ConfigItemRef> head,
              << ", path: " << path;
   auto find_target_node =
       merge_tree ? &TypeCheckedCopyOnWrite : &TraverseCopyOnWrite;
-  auto target = find_target_node(head, path);
+  auto target = find_target_node(std::move(head), path);
   if (!target) {
     // error finding target node; cannot write
     return false;
@@ -230,7 +231,7 @@ static void InsertByPriority(vector<of<Dependency>>& list,
   list.insert(upper, value);
 }
 
-void ConfigDependencyGraph::Add(an<Dependency> dependency) {
+void ConfigDependencyGraph::Add(const an<Dependency>& dependency) {
   DLOG(INFO) << "ConfigDependencyGraph::Add(), node_stack.size() = "
              << node_stack.size();
   if (node_stack.empty())
@@ -274,12 +275,12 @@ ConfigCompiler::ConfigCompiler(ResourceResolver* resource_resolver,
       plugin_(plugin),
       graph_(new ConfigDependencyGraph) {}
 
-ConfigCompiler::~ConfigCompiler() {}
+ConfigCompiler::~ConfigCompiler() = default;
 
 Reference ConfigCompiler::CreateReference(const string& qualified_path) {
-  auto end = qualified_path.find_last_of("?");
+  auto end = qualified_path.find_last_of('?');
   bool optional = end != string::npos;
-  auto separator = qualified_path.find_first_of(":");
+  auto separator = qualified_path.find_first_of(':');
   string resource_id = resource_resolver_->ToResourceId(
       (separator == string::npos || separator == 0)
           ? graph_->current_resource_id()
@@ -292,20 +293,20 @@ Reference ConfigCompiler::CreateReference(const string& qualified_path) {
   return Reference{resource_id, local_path, optional};
 }
 
-void ConfigCompiler::AddDependency(an<Dependency> dependency) {
+void ConfigCompiler::AddDependency(const an<Dependency>& dependency) {
   graph_->Add(dependency);
 }
 
-void ConfigCompiler::Push(an<ConfigResource> resource) {
+void ConfigCompiler::Push(const an<ConfigResource>& resource) {
   graph_->Push(resource, resource->resource_id + ":");
 }
 
-void ConfigCompiler::Push(an<ConfigList> config_list, size_t index) {
+void ConfigCompiler::Push(const an<ConfigList>& config_list, size_t index) {
   graph_->Push(New<ConfigListEntryRef>(nullptr, config_list, index),
                ConfigData::FormatListIndex(index));
 }
 
-void ConfigCompiler::Push(an<ConfigMap> config_map, const string& key) {
+void ConfigCompiler::Push(const an<ConfigMap>& config_map, const string& key) {
   graph_->Push(New<ConfigMapEntryRef>(nullptr, config_map, key), key);
 }
 
@@ -314,7 +315,7 @@ void ConfigCompiler::Pop() {
 }
 
 void ConfigCompiler::EnumerateResources(
-    function<void(an<ConfigResource> resource)> process_resource) {
+    const function<void(an<ConfigResource> resource)>& process_resource) {
   for (const auto& r : graph_->resources) {
     process_resource(r.second);
   }
@@ -352,7 +353,7 @@ static bool ResolveBlockingDependencies(ConfigCompiler* compiler,
 }
 
 static an<ConfigItem> GetResolvedItem(ConfigCompiler* compiler,
-                                      an<ConfigResource> resource,
+                                      const an<ConfigResource>& resource,
                                       const string& path) {
   DLOG(INFO) << "GetResolvedItem(" << resource->resource_id << ":" << path
              << ")";
@@ -454,7 +455,7 @@ static bool ParseList(bool (*parser)(ConfigCompiler*, const an<ConfigItem>&),
                       ConfigCompiler* compiler,
                       const an<ConfigItem>& item) {
   if (Is<ConfigList>(item)) {
-    for (auto list_item : *As<ConfigList>(item)) {
+    for (const auto& list_item : *As<ConfigList>(item)) {
       if (!parser(compiler, list_item)) {
         return false;
       }
@@ -496,7 +497,7 @@ bool ConfigCompiler::Parse(const string& key, const an<ConfigItem>& item) {
   return false;
 }
 
-bool ConfigCompiler::Link(an<ConfigResource> target) {
+bool ConfigCompiler::Link(const an<ConfigResource>& target) {
   DLOG(INFO) << "Link(" << target->resource_id << ")";
   auto found = graph_->resources.find(target->resource_id);
   if (found == graph_->resources.end()) {
@@ -504,7 +505,7 @@ bool ConfigCompiler::Link(an<ConfigResource> target) {
     return false;
   }
   return ResolveDependencies(found->first + ":") &&
-         (plugin_ ? plugin_->ReviewLinkOutput(this, target) : true);
+         (plugin_ == nullptr || plugin_->ReviewLinkOutput(this, target));
 }
 
 static bool HasCircularDependencies(ConfigDependencyGraph* graph,

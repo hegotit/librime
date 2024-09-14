@@ -10,14 +10,16 @@
 #include <rime/config/config_data.h>
 #include <rime/config/config_types.h>
 
+#include <utility>
+
 namespace rime {
 
 template <class T>
 class ConfigCowRef : public ConfigItemRef {
  public:
   ConfigCowRef(an<ConfigItemRef> parent, string key)
-      : ConfigItemRef(nullptr), parent_(parent), key_(key) {}
-  an<ConfigItem> GetItem() const override {
+      : ConfigItemRef(nullptr), parent_(std::move(parent)), key_(std::move(key)) {}
+  [[nodiscard]] an<ConfigItem> GetItem() const override {
     auto container = As<T>(**parent_);
     return container ? Read(container, key_) : nullptr;
   }
@@ -63,7 +65,7 @@ template <>
 inline void ConfigCowRef<ConfigMap>::Write(const an<ConfigMap>& map,
                                            const string& key,
                                            an<ConfigItem> value) {
-  map->Set(key, value);
+  map->Set(key, std::move(value));
 }
 
 template <>
@@ -76,10 +78,10 @@ template <>
 inline void ConfigCowRef<ConfigList>::Write(const an<ConfigList>& list,
                                             const string& key,
                                             an<ConfigItem> value) {
-  list->SetAt(ConfigData::ResolveListIndex(list, key), value);
+  list->SetAt(ConfigData::ResolveListIndex(list, key), std::move(value));
 }
 
-inline an<ConfigItemRef> Cow(an<ConfigItemRef> parent, string key) {
+inline an<ConfigItemRef> Cow(const an<ConfigItemRef>& parent, const string& key) {
   if (ConfigData::IsListItemReference(key))
     return New<ConfigCowRef<ConfigList>>(parent, key);
   else

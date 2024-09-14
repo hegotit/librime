@@ -19,9 +19,9 @@ struct Segment;
 
 class Speller : public Processor {
  public:
-  Speller(const Ticket& ticket);
+  explicit Speller(const Ticket& ticket);
 
-  virtual ProcessResult ProcessKeyEvent(const KeyEvent& key_event);
+  ProcessResult ProcessKeyEvent(const KeyEvent& key_event) override;
 
  protected:
   enum AutoClearMethod {

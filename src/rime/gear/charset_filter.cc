@@ -13,6 +13,8 @@
 #include <rime/dict/vocabulary.h>
 #include <rime/gear/charset_filter.h>
 
+#include <utility>
+
 namespace rime {
 
 bool is_extended_cjk(uint32_t ch) {
@@ -51,7 +53,7 @@ bool contains_extended_cjk(const string& text) {
 // CharsetFilterTranslation
 
 CharsetFilterTranslation::CharsetFilterTranslation(an<Translation> translation)
-    : translation_(translation) {
+    : translation_(std::move(translation)) {
   LocateNextCandidate();
 }
 
@@ -90,7 +92,7 @@ bool CharsetFilter::FilterText(const string& text) {
   return !contains_extended_cjk(text);
 }
 
-bool CharsetFilter::FilterDictEntry(an<DictEntry> entry) {
+bool CharsetFilter::FilterDictEntry(const an<DictEntry>& entry) {
   return entry && FilterText(entry->text);
 }
 
