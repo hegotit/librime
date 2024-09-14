@@ -16,8 +16,8 @@ class Deployer;
 class CustomSettings {
  public:
   CustomSettings(Deployer* deployer,
-                 const string& config_id,
-                 const string& generator_id);
+                 string  config_id,
+                 string  generator_id);
   virtual ~CustomSettings() = default;
 
   virtual bool Load();
@@ -27,7 +27,7 @@ class CustomSettings {
   an<ConfigMap> GetMap(const string& key);
   bool Customize(const string& key, const an<ConfigItem>& item);
   bool IsFirstRun();
-  bool modified() const { return modified_; }
+  [[nodiscard]] bool modified() const { return modified_; }
   Config* config() { return &config_; }
 
  protected:

@@ -20,7 +20,7 @@ class LevelDbAccessor : public DbAccessor {
  public:
   LevelDbAccessor();
   LevelDbAccessor(LevelDbCursor* cursor, const string& prefix);
-  virtual ~LevelDbAccessor();
+  ~LevelDbAccessor() override;
 
   bool Reset() override;
   bool Jump(const string& key) override;
@@ -36,8 +36,8 @@ class LevelDb : public Db, public Recoverable, public Transactional {
  public:
   LevelDb(const path& file_path,
           const string& db_name,
-          const string& db_type = "");
-  virtual ~LevelDb();
+          string  db_type = "");
+  ~LevelDb() override;
 
   bool Remove() override;
   bool Open() override;

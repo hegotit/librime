@@ -7,10 +7,12 @@
 // 2011-07-10 GONG Chen <chen.sst@gmail.com>
 //
 #include <algorithm>
+#include <memory>
 #include <stack>
 #include <cmath>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/range/adaptor/reversed.hpp>
+#include <utility>
 #include <rime/composition.h>
 #include <rime/candidate.h>
 #include <rime/config.h>
@@ -45,7 +47,7 @@ struct SyllabifyTask {
   function<void(SyllabifyTask* task, size_t depth)> pop;
 };
 
-static bool syllabify_dfs(SyllabifyTask* task,
+bool syllabify_dfs(SyllabifyTask* task,
                           size_t depth,
                           size_t current_pos) {
   if (depth == task->code.size()) {
@@ -77,10 +79,10 @@ class ScriptSyllabifier : public PhraseSyllabifier {
  public:
   ScriptSyllabifier(ScriptTranslator* translator,
                     Corrector* corrector,
-                    const string& input,
+                    string  input,
                     size_t start)
       : translator_(translator),
-        input_(input),
+        input_(std::move(input)),
         start_(start),
         syllabifier_(translator->delimiters(),
                      translator->enable_completion(),
@@ -90,13 +92,13 @@ class ScriptSyllabifier : public PhraseSyllabifier {
     }
   }
 
-  virtual Spans Syllabify(const Phrase* phrase);
+  Spans Syllabify(const Phrase* phrase) override;
   size_t BuildSyllableGraph(Prism& prism);
-  string GetPreeditString(const Phrase& cand) const;
-  string GetOriginalSpelling(const Phrase& cand) const;
-  bool IsCandidateCorrection(const Phrase& cand) const;
+  [[nodiscard]] string GetPreeditString(const Phrase& cand) const;
+  [[nodiscard]] string GetOriginalSpelling(const Phrase& cand) const;
+  [[nodiscard]] bool IsCandidateCorrection(const Phrase& cand) const;
 
-  const SyllableGraph& syllable_graph() const { return syllable_graph_; }
+  [[nodiscard]] const SyllableGraph& syllable_graph() const { return syllable_graph_; }
 
  protected:
   ScriptTranslator* translator_;
@@ -124,12 +126,12 @@ class ScriptTranslation : public Translation {
     set_exhausted(true);
   }
   bool Evaluate(Dictionary* dict, UserDictionary* user_dict);
-  virtual bool Next();
-  virtual an<Candidate> Peek();
+  bool Next() override;
+  an<Candidate> Peek() override;
 
  protected:
   bool CheckEmpty();
-  bool IsNormalSpelling() const;
+  [[nodiscard]] bool IsNormalSpelling() const;
   bool PrepareCandidate();
   template <class QueryResult>
   void EnrollEntries(map<int, DictEntryList>& entries_by_end_pos,
@@ -181,7 +183,7 @@ ScriptTranslator::ScriptTranslator(const Ticket& ticket)
       enable_word_completion_ = enable_completion_;
     }
     config->GetInt(name_space_ + "/max_homophones", &max_homophones_);
-    poet_.reset(new Poet(language(), config));
+    poet_ = std::make_unique<Poet>(language(), config);
   }
   if (enable_correction_) {
     if (auto* corrector = Corrector::Require("corrector")) {
@@ -209,7 +211,7 @@ an<Translation> ScriptTranslator::Query(const string& input,
   auto result = New<ScriptTranslation>(this, corrector_.get(), poet_.get(),
                                        input, segment.start, end_of_input);
   if (!result || !result->Evaluate(
-                     dict_.get(), enable_user_dict ? user_dict_.get() : NULL)) {
+                     dict_.get(), enable_user_dict ? user_dict_.get() : nullptr)) {
     return nullptr;
   }
   auto deduped = New<DistinctTranslation>(result);
@@ -342,7 +344,7 @@ string ScriptSyllabifier::GetPreeditString(const Phrase& cand) const {
   if (syllabify_dfs(&task, 0, cand.start() - start_)) {
     return translator_->FormatPreedit(output);
   } else {
-    return string();
+    return {};
   }
 }
 
@@ -351,7 +353,7 @@ string ScriptSyllabifier::GetOriginalSpelling(const Phrase& cand) const {
       static_cast<int>(cand.code().size()) <= translator_->spelling_hints()) {
     return translator_->Spell(cand.code());
   }
-  return string();
+  return {};
 }
 
 template <class Ptr, class Iter>

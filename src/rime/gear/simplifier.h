@@ -19,10 +19,10 @@ class Simplifier : public Filter, TagMatching {
  public:
   explicit Simplifier(const Ticket& ticket);
 
-  virtual an<Translation> Apply(an<Translation> translation,
-                                CandidateList* candidates);
+  an<Translation> Apply(an<Translation> translation,
+                                CandidateList* candidates) override;
 
-  virtual bool AppliesToSegment(Segment* segment) { return TagsMatch(segment); }
+  bool AppliesToSegment(Segment* segment) override { return TagsMatch(segment); }
 
   bool Convert(const an<Candidate>& original, CandidateQueue* result);
 

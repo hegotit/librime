@@ -14,9 +14,9 @@ namespace rime {
 
 class SchemaListTranslator : public Translator {
  public:
-  SchemaListTranslator(const Ticket& ticket);
+  explicit SchemaListTranslator(const Ticket& ticket);
 
-  virtual an<Translation> Query(const string& input, const Segment& segment);
+  an<Translation> Query(const string& input, const Segment& segment) override;
 };
 
 }  // namespace rime

@@ -5,6 +5,7 @@
 // 2011-07-05 GONG Chen <chen.sst@gmail.com>
 //
 #include <algorithm>
+#include <memory>
 #include <utility>
 #include <gtest/gtest.h>
 #include <rime/dict/prism.h>
@@ -12,33 +13,33 @@
 
 class RimeSyllabifierTest : public ::testing::Test {
  public:
-  virtual void SetUp() {
+  void SetUp() override {
     rime::vector<rime::string> syllables;
-    syllables.push_back("a");      // 0 == id
-    syllables.push_back("an");     // 1
-    syllables.push_back("cha");    // 2
-    syllables.push_back("chan");   // 3
-    syllables.push_back("chang");  // 4
-    syllables.push_back("gan");    // 5
-    syllables.push_back("han");    // 6
-    syllables.push_back("hang");   // 7
-    syllables.push_back("na");     // 8
-    syllables.push_back("tu");     // 9
-    syllables.push_back("tuan");   // 10
+    syllables.emplace_back("a");      // 0 == id
+    syllables.emplace_back("an");     // 1
+    syllables.emplace_back("cha");    // 2
+    syllables.emplace_back("chan");   // 3
+    syllables.emplace_back("chang");  // 4
+    syllables.emplace_back("gan");    // 5
+    syllables.emplace_back("han");    // 6
+    syllables.emplace_back("hang");   // 7
+    syllables.emplace_back("na");     // 8
+    syllables.emplace_back("tu");     // 9
+    syllables.emplace_back("tuan");   // 10
     std::sort(syllables.begin(), syllables.end());
     for (size_t i = 0; i < syllables.size(); ++i) {
       syllable_id_[syllables[i]] = i;
     }
 
     rime::path file_path("syllabifier_test.bin");
-    prism_.reset(new rime::Prism(file_path));
+    prism_ = std::make_unique<rime::Prism>(file_path);
     rime::set<rime::string> keyset;
     std::copy(syllables.begin(), syllables.end(),
               std::inserter(keyset, keyset.begin()));
     prism_->Build(keyset);
   }
 
-  virtual void TearDown() {}
+  void TearDown() override {}
 
  protected:
   rime::map<rime::string, rime::SyllableId> syllable_id_;
@@ -157,6 +158,6 @@ TEST_F(RimeSyllabifierTest, TransposedSyllableGraph) {
   EXPECT_FALSE(g.indices[0].end() == g.indices[0].find(syllable_id_["chan"]));
   EXPECT_FALSE(g.indices[0].end() == g.indices[0].find(syllable_id_["chang"]));
   ASSERT_EQ(1, g.indices[0][syllable_id_["chan"]].size());
-  ASSERT_FALSE(NULL == g.indices[0][syllable_id_["chan"]][0]);
+  ASSERT_FALSE(nullptr == g.indices[0][syllable_id_["chan"]][0]);
   EXPECT_EQ(4, g.indices[0][syllable_id_["chan"]][0]->end_pos);
 }

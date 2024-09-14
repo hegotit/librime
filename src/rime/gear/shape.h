@@ -15,15 +15,15 @@ namespace rime {
 
 class ShapeFormatter : public Formatter {
  public:
-  ShapeFormatter(const Ticket& ticket) : Formatter(ticket) {}
-  virtual void Format(string* text);
+  explicit ShapeFormatter(const Ticket& ticket) : Formatter(ticket) {}
+  void Format(string* text) override;
 };
 
 class ShapeProcessor : public Processor {
  public:
-  ShapeProcessor(const Ticket& ticket)
+  explicit ShapeProcessor(const Ticket& ticket)
       : Processor(ticket), formatter_(ticket) {}
-  virtual ProcessResult ProcessKeyEvent(const KeyEvent& key_event);
+  ProcessResult ProcessKeyEvent(const KeyEvent& key_event) override;
 
  private:
   ShapeFormatter formatter_;
@@ -31,4 +31,4 @@ class ShapeProcessor : public Processor {
 
 }  // namespace rime
 
-#endif  // RIME_FORMATTER_H_
+#endif  // RIME_SHAPE_H_

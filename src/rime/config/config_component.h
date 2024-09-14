@@ -23,10 +23,10 @@ class Config : public Class<Config, const string&>, public ConfigItemRef {
   // CAVEAT: Config instances created without argument will NOT
   // be managed by ConfigComponent
   RIME_API Config();
-  RIME_API virtual ~Config();
+  RIME_API ~Config() override;
   // instances of Config with identical config id share a copy of config data
   // in the ConfigComponent
-  explicit Config(an<ConfigData> data);
+  explicit Config(const an<ConfigData>& data);
 
   // returns whether actually saved to file.
   bool Save();
@@ -62,7 +62,7 @@ class Config : public Class<Config, const string&>, public ConfigItemRef {
   using ConfigItemRef::operator=;
 
  protected:
-  an<ConfigItem> GetItem() const;
+  [[nodiscard]] an<ConfigItem> GetItem() const override;
   void SetItem(an<ConfigItem> item);
 
   an<ConfigData> data_;
@@ -92,9 +92,9 @@ struct UserConfigResourceProvider {
 
 class ConfigComponentBase : public Config::Component {
  public:
-  RIME_API ConfigComponentBase(ResourceResolver* resource_resolver);
-  RIME_API virtual ~ConfigComponentBase();
-  RIME_API Config* Create(const string& file_name);
+  RIME_API explicit ConfigComponentBase(ResourceResolver* resource_resolver);
+  RIME_API ~ConfigComponentBase() override;
+  RIME_API Config* Create(const string& file_name) override;
 
  protected:
   virtual an<ConfigData> LoadConfig(const string& config_id) = 0;
@@ -108,11 +108,11 @@ class ConfigComponentBase : public Config::Component {
 template <class Loader, class ResourceProvider = ConfigResourceProvider>
 class ConfigComponent : public ConfigComponentBase {
  public:
-  ConfigComponent(const ResourceType& resource_type =
+  explicit ConfigComponent(const ResourceType& resource_type =
                       ResourceProvider::kDefaultResourceType)
       : ConfigComponentBase(
             ResourceProvider::CreateResourceResolver(resource_type)) {}
-  ConfigComponent(function<void(Loader* loader)> setup)
+  explicit ConfigComponent(function<void(Loader* loader)> setup)
       : ConfigComponentBase(ResourceProvider::CreateResourceResolver(
             ResourceProvider::kDefaultResourceType)) {
     setup(&loader_);
@@ -128,7 +128,7 @@ class ConfigComponent : public ConfigComponentBase {
 class ConfigLoader {
  public:
   RIME_API an<ConfigData> LoadConfig(ResourceResolver* resource_resolver,
-                                     const string& config_id);
+                                     const string& config_id) const;
   void set_auto_save(bool auto_save) { auto_save_ = auto_save; }
 
  private:

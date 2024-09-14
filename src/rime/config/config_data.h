@@ -22,22 +22,22 @@ class ConfigData {
   // returns whether actually saved to file.
   bool Save();
   bool LoadFromStream(std::istream& stream);
-  bool SaveToStream(std::ostream& stream);
+  bool SaveToStream(std::ostream& stream) const;
   bool LoadFromFile(const path& file_path, ConfigCompiler* compiler);
   bool SaveToFile(const path& file_path);
-  bool TraverseWrite(const string& path, an<ConfigItem> item);
-  an<ConfigItem> Traverse(const string& path);
+  bool TraverseWrite(const string& path, const an<ConfigItem>& item);
+  an<ConfigItem> Traverse(const string& path) const;
 
   static vector<string> SplitPath(const string& path);
   static string JoinPath(const vector<string>& keys);
   static bool IsListItemReference(const string& key);
   static string FormatListIndex(size_t index);
-  static size_t ResolveListIndex(an<ConfigItem> list,
+  static size_t ResolveListIndex(const an<ConfigItem>& list,
                                  const string& key,
                                  bool read_only = false);
 
-  const path& file_path() const { return file_path_; }
-  bool modified() const { return modified_; }
+  [[nodiscard]] const path& file_path() const { return file_path_; }
+  [[nodiscard]] bool modified() const { return modified_; }
   void set_modified() { modified_ = true; }
   void set_auto_save(bool auto_save) { auto_save_ = auto_save; }
 

@@ -31,8 +31,8 @@ class RIME_API StringTable {
   void Predict(const string& query, vector<StringId>* result);
   string GetString(StringId string_id);
 
-  size_t NumKeys() const;
-  size_t BinarySize() const;
+  [[nodiscard]] size_t NumKeys() const;
+  [[nodiscard]] size_t BinarySize() const;
 
  protected:
   marisa::Trie trie_;

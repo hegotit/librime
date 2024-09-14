@@ -19,12 +19,12 @@ using TextDbData = map<string, string>;
 class TextDbAccessor : public DbAccessor {
  public:
   TextDbAccessor(const TextDbData& data, const string& prefix);
-  virtual ~TextDbAccessor();
+  ~TextDbAccessor() override;
 
-  virtual bool Reset();
-  virtual bool Jump(const string& key);
-  virtual bool GetNextRecord(string* key, string* value);
-  virtual bool exhausted();
+  bool Reset() override;
+  bool Jump(const string& key) override;
+  bool GetNextRecord(string* key, string* value) override;
+  bool exhausted() override;
 
  private:
   const TextDbData& data_;
@@ -41,9 +41,9 @@ class TextDb : public Db {
  public:
   TextDb(const path& file_path,
          const string& db_name,
-         const string& db_type,
+         string  db_type,
          TextFormat format);
-  RIME_API virtual ~TextDb();
+  RIME_API ~TextDb() override;
 
   RIME_API bool Open() override;
   RIME_API bool OpenReadOnly() override;

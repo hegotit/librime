@@ -28,13 +28,13 @@ class SwitcherSettings : public CustomSettings {
   using Selection = vector<string>;
 
   explicit SwitcherSettings(Deployer* deployer);
-  bool Load();
+  bool Load() override;
   bool Select(Selection selection);
-  bool SetHotkeys(const string& hotkeys);
+  static bool SetHotkeys(const string& hotkeys);
 
-  const SchemaList& available() const { return available_; }
-  const Selection& selection() const { return selection_; }
-  const string& hotkeys() const { return hotkeys_; }
+  [[nodiscard]] const SchemaList& available() const { return available_; }
+  [[nodiscard]] const Selection& selection() const { return selection_; }
+  [[nodiscard]] const string& hotkeys() const { return hotkeys_; }
 
  private:
   void GetAvailableSchemasFromDirectory(const path& dir);

@@ -3,6 +3,7 @@
 // Distributed under the BSD License
 //
 
+#include <memory>
 #include <sstream>
 #include <gtest/gtest.h>
 #include <rime/component.h>
@@ -14,10 +15,10 @@ class RimeConfigCompilerTestBase : public ::testing::Test {
  protected:
   RimeConfigCompilerTestBase() = default;
 
-  virtual string test_config_id() const = 0;
+  [[nodiscard]] virtual string test_config_id() const = 0;
 
-  virtual void SetUp() {
-    component_.reset(new ConfigComponent<ConfigBuilder>);
+  void SetUp() override {
+    component_ = std::make_unique<ConfigComponent<ConfigBuilder>>();
     config_.reset(component_->Create(test_config_id()));
   }
 
@@ -27,7 +28,7 @@ class RimeConfigCompilerTestBase : public ::testing::Test {
 
 class RimeConfigCompilerTest : public RimeConfigCompilerTestBase {
  protected:
-  string test_config_id() const override { return "config_compiler_test"; }
+  [[nodiscard]] string test_config_id() const override { return "config_compiler_test"; }
 };
 
 TEST_F(RimeConfigCompilerTest, IncludeLocalReference) {
@@ -109,7 +110,7 @@ TEST_F(RimeConfigCompilerTest, PatchList) {
 
 class RimeConfigDependencyTest : public RimeConfigCompilerTestBase {
  protected:
-  string test_config_id() const override { return "config_dependency_test"; }
+  [[nodiscard]] string test_config_id() const override { return "config_dependency_test"; }
 };
 
 TEST_F(RimeConfigDependencyTest, DependencyChaining) {
@@ -142,7 +143,7 @@ TEST_F(RimeConfigDependencyTest, DependencyPriorities) {
 
 class RimeConfigOptionalReferenceTest : public RimeConfigCompilerTestBase {
  protected:
-  string test_config_id() const override {
+  [[nodiscard]] string test_config_id() const override {
     return "config_optional_reference_test";
   }
 };
@@ -158,7 +159,7 @@ TEST_F(RimeConfigOptionalReferenceTest, OptionalReference) {
 
 class RimeConfigMergeTest : public RimeConfigCompilerTestBase {
  protected:
-  string test_config_id() const override { return "config_merge_test"; }
+  [[nodiscard]] string test_config_id() const override { return "config_merge_test"; }
 };
 
 TEST_F(RimeConfigMergeTest, AppendWithInclude) {
@@ -242,7 +243,7 @@ TEST_F(RimeConfigMergeTest, MergeTree) {
 
 class RimeConfigCircularDependencyTest : public RimeConfigCompilerTestBase {
  protected:
-  string test_config_id() const override {
+  [[nodiscard]] string test_config_id() const override {
     return "config_circular_dependency_test";
   }
 };

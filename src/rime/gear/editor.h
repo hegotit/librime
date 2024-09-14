@@ -23,7 +23,7 @@ class Editor : public Processor, public KeyBindingProcessor<Editor> {
   using CharHandlerPtr = ProcessResult (Editor::*)(Context* ctx, int ch);
 
   Editor(const Ticket& ticket, bool auto_commit);
-  ProcessResult ProcessKeyEvent(const KeyEvent& key_event);
+  ProcessResult ProcessKeyEvent(const KeyEvent& key_event) override;
 
   Handler Confirm;
   Handler ToggleSelection;
@@ -49,12 +49,12 @@ class Editor : public Processor, public KeyBindingProcessor<Editor> {
 
 class FluidEditor : public Editor {
  public:
-  FluidEditor(const Ticket& ticket);
+  explicit FluidEditor(const Ticket& ticket);
 };
 
 class ExpressEditor : public Editor {
  public:
-  ExpressEditor(const Ticket& ticket);
+  explicit ExpressEditor(const Ticket& ticket);
 };
 
 }  // namespace rime

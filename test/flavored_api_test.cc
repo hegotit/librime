@@ -26,7 +26,7 @@ TEST(RimeLeversApiStdboolTest, CustomSettings) {
   RIME_FLAVORED(RimeApi)* rime = RIME_FLAVORED(rime_get_api)();
   RimeModule* module = rime->find_module("levers_stdbool");
   ASSERT_TRUE(bool(module));
-  RIME_FLAVORED(RimeLeversApi)* levers =
+  auto* levers =
       (RIME_FLAVORED(RimeLeversApi)*)module->get_api();
   ASSERT_TRUE(bool(levers));
 

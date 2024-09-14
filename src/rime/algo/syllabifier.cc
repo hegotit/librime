@@ -17,7 +17,7 @@ using namespace corrector;
 
 using Vertex = pair<size_t, SpellingType>;
 using VertexQueue =
-    std::priority_queue<Vertex, vector<Vertex>, std::greater<Vertex>>;
+    std::priority_queue<Vertex, vector<Vertex>, std::greater<>>;
 
 const double kCompletionPenalty = -0.6931471805599453;     // log(0.5)
 const double kCorrectionCredibility = -4.605170185988091;  // log(0.01)
@@ -30,7 +30,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
 
   size_t farthest = 0;
   VertexQueue queue;
-  queue.push(Vertex{0, kNormalSpelling});  // start
+  queue.emplace(0, kNormalSpelling);  // start
 
   while (!queue.empty()) {
     Vertex vertex(queue.top());
@@ -130,7 +130,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
         if (end_vertex_type < vertex.second) {
           end_vertex_type = vertex.second;
         }
-        queue.push(Vertex{end_pos, end_vertex_type});
+        queue.emplace(end_pos, end_vertex_type);
         DLOG(INFO) << "added to syllable graph, edge: [" << current_pos << ", "
                    << end_pos << ")";
       }
@@ -214,7 +214,7 @@ int Syllabifier::BuildSyllableGraph(const string& input,
             props.end_pos = end_pos;
             // add a syllable with properties to the edge's
             // spelling-to-syllable map
-            spellings.insert({syllable_id, props});
+            spellings.insert(SpellingMap::value_type(syllable_id, props));
           }
           accessor.Next();
         }

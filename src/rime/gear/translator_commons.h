@@ -22,7 +22,7 @@ namespace rime {
 
 class Patterns : public vector<boost::regex> {
  public:
-  bool Load(an<ConfigList> patterns);
+  bool Load(const an<ConfigList>& patterns);
 };
 
 //
@@ -34,13 +34,13 @@ class Spans {
   void AddSpans(const Spans& spans);
   void Clear();
   // move by syllable by returning a value different from caret_pos
-  size_t PreviousStop(size_t caret_pos) const;
-  size_t NextStop(size_t caret_pos) const;
-  size_t Count(size_t start_pos, size_t end_pos) const;
-  size_t Count() const { return vertices_.empty() ? 0 : vertices_.size() - 1; }
-  size_t start() const { return vertices_.empty() ? 0 : vertices_.front(); }
-  size_t end() const { return vertices_.empty() ? 0 : vertices_.back(); }
-  bool HasVertex(size_t vertex) const;
+  [[nodiscard]] size_t PreviousStop(size_t caret_pos) const;
+  [[nodiscard]] size_t NextStop(size_t caret_pos) const;
+  [[nodiscard]] size_t Count(size_t start_pos, size_t end_pos) const;
+  [[nodiscard]] size_t Count() const { return vertices_.empty() ? 0 : vertices_.size() - 1; }
+  [[nodiscard]] size_t start() const { return vertices_.empty() ? 0 : vertices_.front(); }
+  [[nodiscard]] size_t end() const { return vertices_.empty() ? 0 : vertices_.back(); }
+  [[nodiscard]] bool HasVertex(size_t vertex) const;
   void set_vertices(vector<size_t>&& vertices) { vertices_ = vertices; }
 
  private:
@@ -68,32 +68,32 @@ class Phrase : public Candidate {
          size_t end,
          const an<DictEntry>& entry)
       : Candidate(type, start, end), language_(language), entry_(entry) {}
-  const string& text() const { return entry_->text; }
-  string comment() const { return entry_->comment; }
-  string preedit() const { return entry_->preedit; }
+  [[nodiscard]] const string& text() const override { return entry_->text; }
+  [[nodiscard]] string comment() const override { return entry_->comment; }
+  [[nodiscard]] string preedit() const override { return entry_->preedit; }
   void set_comment(const string& comment) { entry_->comment = comment; }
   void set_preedit(const string& preedit) { entry_->preedit = preedit; }
   void set_syllabifier(an<PhraseSyllabifier> syllabifier) {
-    syllabifier_ = syllabifier;
+    syllabifier_ = std::move(syllabifier);
   }
-  double weight() const { return entry_->weight; }
+  [[nodiscard]] double weight() const { return entry_->weight; }
   void set_weight(double weight) { entry_->weight = weight; }
-  Code& code() const { return entry_->code; }
-  const DictEntry& entry() const { return *entry_; }
-  const Language* language() const { return language_; }
-  size_t matching_code_size() const {
+  [[nodiscard]] Code& code() const { return entry_->code; }
+  [[nodiscard]] const DictEntry& entry() const { return *entry_; }
+  [[nodiscard]] const Language* language() const { return language_; }
+  [[nodiscard]] size_t matching_code_size() const {
     return entry_->matching_code_size != 0 ? entry_->matching_code_size
                                            : entry_->code.size();
   }
-  bool is_exact_match() const {
+  [[nodiscard]] bool is_exact_match() const {
     return entry_->matching_code_size == 0 ||
            entry_->matching_code_size == entry_->code.size();
   }
-  bool is_predicitve_match() const {
+  [[nodiscard]] bool is_predicitve_match() const {
     return entry_->matching_code_size != 0 &&
            entry_->matching_code_size < entry_->code.size();
   }
-  Code matching_code() const {
+  [[nodiscard]] Code matching_code() const {
     return entry_->matching_code_size == 0
                ? entry_->code
                : Code(entry_->code.begin(),
@@ -113,7 +113,7 @@ class Phrase : public Candidate {
 
 class Sentence : public Phrase {
  public:
-  Sentence(const Language* language)
+  explicit Sentence(const Language* language)
       : Phrase(language, "sentence", 0, 0, New<DictEntry>()) {}
   Sentence(const Sentence& other)
       : Phrase(other),
@@ -124,12 +124,12 @@ class Sentence : public Phrase {
   void Extend(const DictEntry& another, size_t end_pos, double new_weight);
   void Offset(size_t offset);
 
-  bool empty() const { return components_.empty(); }
+  [[nodiscard]] bool empty() const { return components_.empty(); }
 
-  size_t size() const { return components_.size(); }
+  [[nodiscard]] size_t size() const { return components_.size(); }
 
-  const vector<DictEntry>& components() const { return components_; }
-  const vector<size_t>& word_lengths() const { return word_lengths_; }
+  [[nodiscard]] const vector<DictEntry>& components() const { return components_; }
+  [[nodiscard]] const vector<size_t>& word_lengths() const { return word_lengths_; }
 
  protected:
   vector<DictEntry> components_;
@@ -142,28 +142,28 @@ struct Ticket;
 
 class TranslatorOptions {
  public:
-  TranslatorOptions(const Ticket& ticket);
-  bool IsUserDictDisabledFor(const string& input) const;
+  explicit TranslatorOptions(const Ticket& ticket);
+  [[nodiscard]] bool IsUserDictDisabledFor(const string& input) const;
 
-  const string& delimiters() const { return delimiters_; }
-  vector<string> tags() const { return tags_; }
+  [[nodiscard]] const string& delimiters() const { return delimiters_; }
+  [[nodiscard]] vector<string> tags() const { return tags_; }
   void set_tags(const vector<string>& tags) {
     tags_ = tags;
-    if (tags_.size() == 0) {
-      tags_.push_back("abc");
+    if (tags_.empty()) {
+      tags_.emplace_back("abc");
     }
   }
-  const string& tag() const { return tags_[0]; }
+  [[nodiscard]] const string& tag() const { return tags_[0]; }
   void set_tag(const string& tag) { tags_[0] = tag; }
-  bool contextual_suggestions() const { return contextual_suggestions_; }
+  [[nodiscard]] bool contextual_suggestions() const { return contextual_suggestions_; }
   void set_contextual_suggestions(bool enabled) {
     contextual_suggestions_ = enabled;
   }
-  bool enable_completion() const { return enable_completion_; }
+  [[nodiscard]] bool enable_completion() const { return enable_completion_; }
   void set_enable_completion(bool enabled) { enable_completion_ = enabled; }
-  bool strict_spelling() const { return strict_spelling_; }
+  [[nodiscard]] bool strict_spelling() const { return strict_spelling_; }
   void set_strict_spelling(bool is_strict) { strict_spelling_ = is_strict; }
-  double initial_quality() const { return initial_quality_; }
+  [[nodiscard]] double initial_quality() const { return initial_quality_; }
   void set_initial_quality(double quality) { initial_quality_ = quality; }
   Projection& preedit_formatter() { return preedit_formatter_; }
   Projection& comment_formatter() { return comment_formatter_; }

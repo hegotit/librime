@@ -31,7 +31,7 @@ const char kDefaultAlphabet[] = "abcdefghijklmnopqrstuvwxyz";
 
 SpellingAccessor::SpellingAccessor(prism::SpellingMap* spelling_map,
                                    SyllableId spelling_id)
-    : spelling_id_(spelling_id), iter_(NULL), end_(NULL) {
+    : spelling_id_(spelling_id), iter_(nullptr), end_(nullptr) {
   if (spelling_map &&
       spelling_id < static_cast<SyllableId>(spelling_map->size)) {
     iter_ = spelling_map->at[spelling_id].begin();
@@ -89,7 +89,7 @@ bool Prism::Load() {
     Close();
     return false;
   }
-  if (strncmp(metadata_->format, kPrismFormatPrefix, kPrismFormatPrefixLen)) {
+  if (strncmp(metadata_->format, kPrismFormatPrefix, kPrismFormatPrefixLen) != 0) {
     LOG(ERROR) << "invalid metadata.";
     Close();
     return false;
@@ -106,7 +106,7 @@ bool Prism::Load() {
   LOG(INFO) << "found double array image of size " << array_size << ".";
   trie_->set_array(array, array_size);
 
-  spelling_map_ = NULL;
+  spelling_map_ = nullptr;
   if (format_ > 1.0 - DBL_EPSILON) {
     spelling_map_ = metadata_->spelling_map.get();
   }
@@ -175,7 +175,7 @@ bool Prism::Build(const Syllabary& syllabary,
       for (const char* p = keys[i]; *p; ++p)
         alphabet.insert(*p);
     char* p = metadata->alphabet;
-    set<char>::const_iterator c = alphabet.begin();
+    auto c = alphabet.begin();
     for (; c != alphabet.end(); ++p, ++c)
       *p = *c;
     *p = '\0';
@@ -193,8 +193,8 @@ bool Prism::Build(const Syllabary& syllabary,
   if (script) {
     map<string, SyllableId> syllable_to_id;
     SyllableId syll_id = 0;
-    for (auto it = syllabary.begin(); it != syllabary.end(); ++it) {
-      syllable_to_id[*it] = syll_id++;
+    for (const auto& it : syllabary) {
+      syllable_to_id[it] = syll_id++;
     }
     auto spelling_map = CreateArray<prism::SpellingMapItem>(num_spellings);
     if (!spelling_map) {
@@ -304,7 +304,7 @@ void Prism::ExpandSearch(const string& key,
 }
 
 SpellingAccessor Prism::QuerySpelling(SyllableId spelling_id) {
-  return SpellingAccessor(spelling_map_, spelling_id);
+  return {spelling_map_, spelling_id};
 }
 
 size_t Prism::array_size() const {

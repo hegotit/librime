@@ -7,16 +7,18 @@
 
 #include <rime/common.h>
 
+#include <utility>
+
 namespace rime {
 
 class Customizer {
  public:
-  Customizer(const path& source_path,
-             const path& dest_path,
-             const string& version_key)
-      : source_path_(source_path),
-        dest_path_(dest_path),
-        version_key_(version_key) {}
+  Customizer(path  source_path,
+             path  dest_path,
+             string  version_key)
+      : source_path_(std::move(source_path)),
+        dest_path_(std::move(dest_path)),
+        version_key_(std::move(version_key)) {}
 
   // DEPRECATED: in favor of auto-patch config compiler plugin
   bool UpdateConfigFile();

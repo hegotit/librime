@@ -9,6 +9,7 @@
 #include <cmath>
 #include <boost/algorithm/string.hpp>
 #include <boost/scope_exit.hpp>
+#include <utility>
 #include <rime/common.h>
 #include <rime/language.h>
 #include <rime/schema.h>
@@ -25,9 +26,9 @@
 namespace rime {
 
 struct DfsState {
-  size_t depth_limit;
-  size_t predict_word_from_depth;
-  TickCount present_tick;
+  size_t depth_limit{};
+  size_t predict_word_from_depth{};
+  TickCount present_tick{};
   Code code;
   vector<double> credibility;
   hash_map<int, DictEntryList> query_result;
@@ -35,12 +36,12 @@ struct DfsState {
   string key;
   string value;
 
-  size_t depth() const { return code.size(); }
+  [[nodiscard]] size_t depth() const { return code.size(); }
 
-  bool IsExactMatch(const string& prefix) {
+  [[nodiscard]] bool IsExactMatch(const string& prefix) const {
     return boost::starts_with(key, prefix + '\t');
   }
-  bool IsPrefixMatch(const string& prefix) {
+  [[nodiscard]] bool IsPrefixMatch(const string& prefix) const {
     return boost::starts_with(key, prefix);
   }
   void RecruitEntry(size_t pos,
@@ -80,11 +81,11 @@ void DfsState::RecruitEntry(size_t pos,
       vector<string> syllables =
           strings::split(full_code, " ", strings::SplitBehavior::SkipToken);
       Code numeric_code;
-      for (auto s = syllables.begin(); s != syllables.end(); ++s) {
-        auto found = syllabary->find(*s);
+      for (auto & syllable : syllables) {
+        auto found = syllabary->find(syllable);
         if (found == syllabary->end()) {
           LOG(ERROR) << "failed to recruit dict entry '" << e->text
-                     << "', unrecognized syllable: " << *s;
+                     << "', unrecognized syllable: " << syllable;
           return;
         }
         numeric_code.push_back(found->second);
@@ -151,8 +152,8 @@ bool UserDictEntryIterator::Next() {
 
 // UserDictionary members
 
-UserDictionary::UserDictionary(const string& name, an<Db> db)
-    : name_(name), db_(db) {}
+UserDictionary::UserDictionary(string  name, an<Db> db)
+    : name_(std::move(name)), db_(std::move(db)) {}
 
 UserDictionary::~UserDictionary() {
   if (loaded()) {
@@ -271,8 +272,8 @@ void UserDictionary::DfsLookup(const SyllableGraph& syll_graph,
                 break;
               }
               SyllableId syllable_id = 0;
-              for (auto s = syllabary.begin(); s != syllabary.end(); ++s) {
-                syllabary_[*s] = syllable_id++;
+              for (const auto & s : syllabary) {
+                syllabary_[s] = syllable_id++;
               }
             }
             state->RecruitEntry(end_pos, &syllabary_);
@@ -479,7 +480,7 @@ bool UserDictionary::NewTransaction() {
   if (!db)
     return false;
   CommitPendingTransaction();
-  transaction_time_ = time(NULL);
+  transaction_time_ = time(nullptr);
   return db->BeginTransaction();
 }
 
@@ -487,7 +488,7 @@ bool UserDictionary::RevertRecentTransaction() {
   auto db = As<Transactional>(db_);
   if (!db || !db->in_transaction())
     return false;
-  if (time(NULL) - transaction_time_ > 3 /*seconds*/)
+  if (time(nullptr) - transaction_time_ > 3 /*seconds*/)
     return false;
   return db->AbortTransaction();
 }
@@ -556,7 +557,7 @@ an<DictEntry> UserDictionary::CreateDictEntry(const string& key,
 
 // UserDictionaryComponent members
 
-UserDictionaryComponent::UserDictionaryComponent() {}
+UserDictionaryComponent::UserDictionaryComponent() = default;
 
 UserDictionary* UserDictionaryComponent::Create(const string& dict_name,
                                                 const string& db_class) {
@@ -565,7 +566,7 @@ UserDictionary* UserDictionaryComponent::Create(const string& dict_name,
     auto component = Db::Require(db_class);
     if (!component) {
       LOG(ERROR) << "undefined db class '" << db_class << "'.";
-      return NULL;
+      return nullptr;
     }
     db.reset(component->Create(dict_name));
     db_pool_[dict_name] = db;
@@ -575,12 +576,12 @@ UserDictionary* UserDictionaryComponent::Create(const string& dict_name,
 
 UserDictionary* UserDictionaryComponent::Create(const Ticket& ticket) {
   if (!ticket.schema)
-    return NULL;
+    return nullptr;
   Config* config = ticket.schema->config();
   bool enable_user_dict = true;
   config->GetBool(ticket.name_space + "/enable_user_dict", &enable_user_dict);
   if (!enable_user_dict)
-    return NULL;
+    return nullptr;
   string dict_name;
   if (config->GetString(ticket.name_space + "/user_dict", &dict_name)) {
     // user specified name
@@ -590,7 +591,7 @@ UserDictionary* UserDictionaryComponent::Create(const Ticket& ticket) {
   } else {
     LOG(ERROR) << ticket.name_space << "/dictionary not specified in schema '"
                << ticket.schema->schema_id() << "'.";
-    return NULL;
+    return nullptr;
   }
   string db_class("userdb");
   if (config->GetString(ticket.name_space + "/db_class", &db_class)) {

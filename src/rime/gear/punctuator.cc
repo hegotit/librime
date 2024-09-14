@@ -36,7 +36,7 @@ void PunctConfig::LoadConfig(Engine* engine, bool load_symbols) {
   }
 }
 
-an<ConfigItem> PunctConfig::GetPunctDefinition(const string key) {
+an<ConfigItem> PunctConfig::GetPunctDefinition(const string& key) {
   an<ConfigItem> result = mapping_ ? mapping_->Get(key) : nullptr;
   return result ? result : symbols_ ? symbols_->Get(key) : nullptr;
 }

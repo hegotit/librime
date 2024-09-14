@@ -7,6 +7,7 @@
 #include <boost/algorithm/string.hpp>
 #include <filesystem>
 #include <boost/scope_exit.hpp>
+#include <utility>
 #include <rime/deployer.h>
 #include <rime/dict/db.h>
 #include <rime/dict/user_db.h>
@@ -14,7 +15,7 @@
 
 namespace rime {
 
-UserDbRecoveryTask::UserDbRecoveryTask(an<Db> db) : db_(db) {
+UserDbRecoveryTask::UserDbRecoveryTask(an<Db> db) : db_(std::move(db)) {
   if (db_) {
     db_->disable();
   }
@@ -87,7 +88,7 @@ UserDbRecoveryTask* UserDbRecoveryTaskComponent::Create(TaskInitializer arg) {
     auto db = std::any_cast<an<Db>>(arg);
     return new UserDbRecoveryTask(db);
   } catch (const std::bad_any_cast&) {
-    return NULL;
+    return nullptr;
   }
 }
 

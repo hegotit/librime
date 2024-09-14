@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <boost/algorithm/string.hpp>
+#include <utility>
 #include <rime/resource.h>
 #include <rime/schema.h>
 #include <rime/service.h>
@@ -202,7 +203,7 @@ uint32_t ReverseDb::dict_file_checksum() const {
   return metadata_ ? metadata_->dict_file_checksum : 0;
 }
 
-ReverseLookupDictionary::ReverseLookupDictionary(an<ReverseDb> db) : db_(db) {}
+ReverseLookupDictionary::ReverseLookupDictionary(an<ReverseDb> db) : db_(std::move(db)) {}
 
 bool ReverseLookupDictionary::Load() {
   return db_ && (db_->IsOpen() || db_->Load());
@@ -248,12 +249,12 @@ ReverseLookupDictionary* ReverseLookupDictionaryComponent::Create(
 ReverseLookupDictionary* ReverseLookupDictionaryComponent::Create(
     const Ticket& ticket) {
   if (!ticket.schema)
-    return NULL;
+    return nullptr;
   Config* config = ticket.schema->config();
   string dict_name;
   if (!config->GetString(ticket.name_space + "/dictionary", &dict_name)) {
     // missing!
-    return NULL;
+    return nullptr;
   }
   return Create(dict_name);
 }
